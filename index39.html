@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Fallas de Red</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+  body{background:linear-gradient(135deg,#1F3864,#2E5C9A);min-height:100vh;padding:20px;color:#333}
+  .container{max-width:900px;margin:0 auto}
+  header{background:#1F3864;color:#fff;padding:20px 30px;border-radius:12px 12px 0 0;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+  header h1{font-size:22px;letter-spacing:.5px}
+  header p{font-size:13px;opacity:.85;margin-top:5px}
+  .card{background:#fff;padding:30px;border-radius:0 0 12px 12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .full{grid-column:1/-1}
+  label{display:block;font-size:13px;font-weight:600;color:#1F3864;margin-bottom:6px}
+  label .req{color:#e53935}
+  input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid #B4C6E7;border-radius:8px;font-size:14px;transition:.2s;background:#fafcff}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:#2E5C9A;box-shadow:0 0 0 3px rgba(46,92,154,.15)}
+  input:read-only { background: #eef2f8; color: #555; cursor: not-allowed; border-color: #cbd5e1;}
+  textarea{resize:vertical;min-height:70px}
+  .btn{width:100%;padding:14px;background:linear-gradient(135deg,#1F3864,#2E5C9A);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:20px;letter-spacing:.5px;transition:.2s}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(31,56,100,.4)}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  .btn-sec{background:#607D8B;margin-top:10px}
+  .btn-exp{background:#2E7D32}
+  .btn-imp{background:#3B82F6}
+  .btn-del{background:#c62828}
+  .btn-wa{background:#25D366; color:#fff; font-weight:bold;}
+  .btn-sm{padding:6px 10px; font-size:12px; margin:0 2px; border-radius:4px; border:none; cursor:pointer; font-weight:bold; color:white;}
+  .btn-update{background:#F59E0B;}
+  .btn-finish{background:#10B981;}
+  
+  .actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:15px}
+  .actions .btn{margin-top:0;padding:12px;font-size:13px}
+  
+  .msg{display:none;background:#F0FDF4;border:1px solid #BBF7D0;border-left:6px solid #22C55E;padding:20px;border-radius:10px;margin-top:20px;font-size:14px;line-height:1.6;color:#166534;box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);}
+  .msg.show{display:block;animation:slide .4s ease}
+  .msg .title{font-size: 16px; font-weight: bold; color: #15803D; margin-bottom: 12px; border-bottom: 1px solid #DCFCE7; padding-bottom: 8px;}
+  .msg-grid {display: grid; grid-template-columns: 140px 1fr; gap: 6px 10px; margin-bottom: 15px;}
+  .msg-label {font-weight: 700; color: #166534; font-size: 13px; display: flex; align-items: center; gap: 6px;}
+  .msg-value {color: #333; font-weight: 500; font-size: 13px; word-break: break-word;}
+  .msg-nap {grid-column: 1 / -1; background: #fff; padding: 10px; border-radius: 6px; border: 1px dashed #86efac; margin-top: 5px;}
+  .msg-footer {font-size: 12px; color: #15803D; text-align: center; margin-top: 15px; border-top: 1px dashed #BBF7D0; padding-top: 10px; font-style: italic;}
+
+  @keyframes slide{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+  .toast{position:fixed;top:20px;right:20px;padding:14px 22px;border-radius:8px;color:#fff;font-weight:600;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.3);opacity:0;transform:translateX(120%);transition:.4s;z-index:999}
+  .toast.show{opacity:1;transform:translateX(0)}
+  .toast.ok{background:#2E7D32}
+  .toast.err{background:#c62828}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
+  .stat{background:#EAF1FB;padding:14px;border-radius:8px;text-align:center;border:1px solid #B4C6E7}
+  .stat .num{font-size:24px;font-weight:800;color:#1F3864}
+  .stat .lbl{font-size:11px;color:#607D8B;text-transform:uppercase;letter-spacing:.5px}
+  table{width:100%;border-collapse:collapse;margin-top:20px;font-size:12px}
+  th{background:#1F3864;color:#fff;padding:10px;text-align:left;font-weight:600}
+  td{padding:8px 10px;border-bottom:1px solid #E3EAF6; vertical-align: middle;}
+  tr:nth-child(even) td{background:#F7FAFF}
+  .tag{padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;display:inline-block}
+  .tag-ini{background:#FFF9C4;color:#F57F17}
+  .tag-act{background:#BBDEFB;color:#0D47A1}
+  .tag-fin{background:#C8E6C9;color:#1B5E20}
+  .empty{text-align:center;padding:30px;color:#90A4AE;font-style:italic}
+  .divider{grid-column:1/-1;border-top:2px dashed #B4C6E7;margin:8px 0;padding-top:16px;font-size:13px;font-weight:700;color:#1F3864}
+
+  .custom-icon {
+    display: inline-block;
+    color: #64748B; 
+    font-size: 16px;
+    line-height: 1;
+    vertical-align: middle;
+    margin-right: 6px;
+    flex-shrink: 0;
+  }
+
+  footer.report-footer{background:#0F1B36;color:#E3EAF6;padding:28px 34px;border-radius:12px;margin-top:28px;box-shadow:0 10px 30px rgba(0,0,0,.35);border-top:5px solid #4A90E2}
+  footer.report-footer .footer-body{font-family:'Consolas','Courier New',monospace;font-size:13.5px;line-height:1.85;white-space:pre-wrap;color:#E3EAF6}
+  footer.report-footer .saludo{color:#FFD166;font-weight:700;font-size:14px}
+  footer.report-footer .firma{margin-top:18px;padding-top:16px;border-top:1px dashed #2E5C9A;font-family:'Segoe UI',sans-serif;font-size:12px;color:#9DB4D6;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  footer.report-footer .firma b{color:#4A90E2}
+
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+  .modal-overlay.show { display: flex; }
+  .modal-content { background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: slide .3s ease; max-height: 90vh; overflow-y: auto; }
+  .modal-header { font-size: 18px; font-weight: bold; color: #1F3864; margin-bottom: 15px; border-bottom: 2px solid #EAF1FB; padding-bottom: 10px; display: flex; justify-content: space-between; }
+  .modal-close { cursor: pointer; color: #c62828; font-size: 20px; }
+  .modal-body .form-group { margin-bottom: 15px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .modal-footer button { padding: 10px 15px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
+  .btn-cancel { background: #E5E7EB; color: #374151; }
+  .btn-save { background: #2E7D32; color: white; }
+
+  /* ===== MULTI SELECT HUB/OLT ===== */
+  .multi-select{position:relative;width:100%}
+  .ms-trigger{display:flex;align-items:center;justify-content:space-between;min-height:42px;padding:6px 12px;border:1.5px solid #B4C6E7;border-radius:8px;background:#fafcff;cursor:pointer;transition:.2s;gap:6px}
+  .ms-trigger:hover{border-color:#2E5C9A}
+  .multi-select.open .ms-trigger{border-color:#2E5C9A;box-shadow:0 0 0 3px rgba(46,92,154,.15)}
+  .ms-chips{display:flex;flex-wrap:wrap;gap:5px;flex:1;min-width:0}
+  .ms-placeholder{color:#8a9bb5;font-size:14px;padding:4px 0}
+  .ms-chip{display:inline-flex;align-items:center;gap:5px;background:#1F3864;color:#fff;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:12px;max-width:100%}
+  .ms-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+  .ms-chip .ms-x{cursor:pointer;font-weight:900;opacity:.85;font-size:13px;line-height:1;padding:0 2px}
+  .ms-chip .ms-x:hover{opacity:1;color:#ffb3b3}
+  .ms-arrow{color:#1F3864;font-size:14px;transition:transform .2s;flex-shrink:0}
+  .multi-select.open .ms-arrow{transform:rotate(180deg)}
+  .ms-panel{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid #B4C6E7;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);z-index:50;overflow:hidden}
+  .multi-select.open .ms-panel{display:block;animation:slide .2s ease}
+  .ms-search{width:100%;border:none;border-bottom:1px solid #E3EAF6;border-radius:0;padding:10px 12px;font-size:13px;background:#f8fafd;outline:none}
+  .ms-search:focus{box-shadow:none;border-color:#E3EAF6;background:#eef4fc}
+  .ms-options{max-height:260px;overflow-y:auto;padding:4px 0}
+  .ms-group-title{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#607D8B;padding:8px 12px 4px;background:#f7faff}
+  .ms-option{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;cursor:pointer;color:#333;transition:background .12s}
+  .ms-option:hover{background:#EAF1FB}
+  .ms-option input{accent-color:#1F3864;width:15px;height:15px;cursor:pointer;flex-shrink:0}
+  .ms-option.hidden{display:none}
+
+  @media(max-width:640px){
+    .grid{grid-template-columns:1fr}
+    .actions{grid-template-columns:1fr 1fr}
+    .stats{grid-template-columns:1fr}
+    footer.report-footer{padding:22px 20px}
+    footer.report-footer .footer-body{font-size:12.5px}
+    .msg-grid {grid-template-columns: 1fr;}
+    .msg-label {margin-top: 5px;}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📡 REGISTRO DE FALLAS DE RED</h1>
+    <p>Sistema de carga y seguimiento — Ciclo INICIO · ACTUALIZACIÓN · FINALIZACIÓN</p>
+  </header>
+
+  <div class="card">
+    <form id="formFalla">
+      <div class="grid">
+        <div class="full"><div class="divider">📋 DATOS DEL EVENTO</div></div>
+
+        <div>
+          <label>ID EVENTO <span class="req">*</span></label>
+          <input type="text" id="idEvento" readonly style="background:#eef2f8;font-weight:700;color:#1F3864">
+        </div>
+        <div>
+          <label>ESTADO DEL EVENTO <span class="req">*</span></label>
+          <select id="estado" required onchange="alCambiarEstado()">
+            <option value="">-- Seleccionar --</option>
+            <option value="INICIO">🟡 INICIO</option>
+            <option value="ACTUALIZACION">🔵 ACTUALIZACIÓN</option>
+            <option value="FINALIZACION">🟢 FINALIZACIÓN</option>
+          </select>
+        </div>
+
+        <!-- CAMPO ANALISTA (OPCIONAL) -->
+        <div class="full">
+          <label>ANALISTA <small style="color:#607D8B;font-weight:400">(opcional)</small></label>
+          <select id="analista">
+            <option value="">-- Seleccionar Analista --</option>
+            <option value="Adaylouis Marin">Adaylouis Marin</option>
+            <option value="Juan valerio">Juan valerio</option>
+            <option value="David Moro">David Moro</option>
+            <option value="Verónica Cardona">Verónica Cardona</option>
+            <option value="Kailyn Carrion">Kailyn Carrion</option>
+            <option value="leonardo Hernandez">leonardo Hernandez</option>
+            <option value="Oscar Ramirez">Oscar Ramirez</option>
+            <option value="Diego Indriago">Diego Indriago</option>
+            <option value="Valentina Noriega">Valentina Noriega</option>
+            <option value="Wuilmer Pulgar">Wuilmer Pulgar</option>
+            <option value="Yunay Carreño">Yunay Carreño</option>
+            <option value="Andres Rodriguez">Andres Rodriguez</option>
+            <option value="Lucia Silva">Lucia Silva</option>
+            <option value="Moises Gomez">Moises Gomez</option>
+          </select>
+        </div>
+        
+        <div>
+          <label>FECHA DE INICIO <span class="req">*</span></label>
+          <input type="date" id="fecha" required>
+        </div>
+        
+        <div>
+          <label>HORA DE INICIO <span class="req">*</span></label>
+          <input type="time" id="hora" required>
+        </div>
+
+        <div id="divHoraAccion" class="full" style="display:none; background:#EAF1FB; padding:15px; border-radius:8px; border:1px dashed #B4C6E7;">
+          <label>HORA DE REGISTRO DE LA ACCIÓN (Actualización/Finalización) <span class="req">*</span></label>
+          <input type="time" id="horaAccion" onchange="calcularTiempoFormulario()">
+          <small style="color:#607D8B; font-size:11px; display:block; margin-top:5px;">Si el ID ya existe, el sistema calcula el tiempo. Si es un ID nuevo, asegúrate de colocar la hora de inicio manual.</small>
+        </div>
+
+        <div class="full" id="divTiempoAfectacion" style="display:none;">
+          <label>TIEMPO DE AFECTACIÓN (Calculado automáticamente)</label>
+          <input type="text" id="tiempoAfectacion" readonly placeholder="El tiempo aparecerá aquí...">
+        </div>
+
+        <div>
+          <label>TIPO DE FALLA <span class="req">*</span></label>
+         <select id="tipoFalla" required>
+ 	   <option value="">-- Seleccionar --</option>
+  	   <option>Falla eléctrica en el HUB</option>
+  	   <option>Falla de energía en sectorial (RF)</option>
+  	   <option>Mtto. de Red óptica</option>
+  	   <option>Avería de Red</option>
+  	   <option>Problemas en NAP</option>
+  	   <option>Afectación OLT</option>
+       <option>LOS Parcial-OLT</option>
+       <option>LOS Total-OLT</option>
+	 </select>
+        </div>
+
+        <div>
+          <label>HUB / OLT <span class="req">*</span> <small style="color:#607D8B;font-weight:400">(puedes seleccionar varios)</small></label>
+          <div class="multi-select" id="multiOlt">
+            <div class="ms-trigger" onclick="toggleMultiSelect(event)">
+              <div class="ms-chips" id="msChips">
+                <span class="ms-placeholder">-- Seleccionar OLT/HUB --</span>
+              </div>
+              <span class="ms-arrow">▾</span>
+            </div>
+            <div class="ms-panel" id="msPanel">
+              <input type="text" class="ms-search" placeholder="🔍 Buscar..." oninput="filtrarOpcionesMulti(this.value)" onclick="event.stopPropagation()">
+              <div class="ms-options" id="msOptions">
+                <div class="ms-group-title">HUBS</div>
+                <label class="ms-option"><input type="checkbox" value="HUB-PUNTA-DE-PIEDRAS" onchange="actualizarSeleccionMulti()"> HUB-PUNTA-DE-PIEDRAS</label>
+                <label class="ms-option"><input type="checkbox" value="HUB-VISTA-HERMOSA-CORPOELEC" onchange="actualizarSeleccionMulti()"> HUB-VISTA-HERMOSA-CORPOELEC</label>
+                <label class="ms-option"><input type="checkbox" value="HUB-CARUPANO" onchange="actualizarSeleccionMulti()"> HUB-CARUPANO</label>
+                <label class="ms-option"><input type="checkbox" value="HUB-PUNTA-DE-PIEDRA-CORPOELEC" onchange="actualizarSeleccionMulti()"> HUB-PUNTA-DE-PIEDRA-CORPOELEC</label>
+                <label class="ms-option"><input type="checkbox" value="HUB-VILLA-ROSA-CORPOELEC" onchange="actualizarSeleccionMulti()"> HUB-VILLA-ROSA-CORPOELEC</label>
+                <label class="ms-option"><input type="checkbox" value="HUB-CARUPANO-CORPOELEC" onchange="actualizarSeleccionMulti()"> HUB-CARUPANO-CORPOELEC</label>
+                <label class="ms-option"><input type="checkbox" value="HUB-VILLA-ROSA" onchange="actualizarSeleccionMulti()"> HUB-VILLA-ROSA</label>
+                <label class="ms-option"><input type="checkbox" value="HUB-ATAMO-CORPOELEC" onchange="actualizarSeleccionMulti()"> HUB-ATAMO-CORPOELEC</label>
+                <label class="ms-option"><input type="checkbox" value="HUB-ATAMO-ARISMENDI" onchange="actualizarSeleccionMulti()"> HUB-ATAMO-ARISMENDI</label>
+                <label class="ms-option"><input type="checkbox" value="5261-HUB-VISTA-HERMOSA" onchange="actualizarSeleccionMulti()"> 5261-HUB-VISTA-HERMOSA</label>
+                <label class="ms-option"><input type="checkbox" value="HUB-BLUESKY" onchange="actualizarSeleccionMulti()"> HUB-BLUESKY</label>
+
+                <div class="ms-group-title">OLT HUAWEI</div>
+                <label class="ms-option"><input type="checkbox" value="202 - OLT-HUAWEI-CARUPANO(Wavered)" onchange="actualizarSeleccionMulti()"> 202 - OLT-HUAWEI-CARUPANO(Wavered)</label>
+                <label class="ms-option"><input type="checkbox" value="207 - OLT-HUAWEI-MARIÑO-BLUESKY(Wave)" onchange="actualizarSeleccionMulti()"> 207 - OLT-HUAWEI-MARIÑO-BLUESKY(Wave)</label>
+                <label class="ms-option"><input type="checkbox" value="208 - OLT-HUAWEI-ANTOLIN-VISTA-HERMOSA(Wave)" onchange="actualizarSeleccionMulti()"> 208 - OLT-HUAWEI-ANTOLIN-VISTA-HERMOSA(Wave)</label>
+                <label class="ms-option"><input type="checkbox" value="233 - OLT-HUAWEI-MGTA-ARISMENDI(Wave)" onchange="actualizarSeleccionMulti()"> 233 - OLT-HUAWEI-MGTA-ARISMENDI(Wave)</label>
+                <label class="ms-option"><input type="checkbox" value="257 - OLT-HUAWEI-GARCIA-VILLAROSA(Wave)" onchange="actualizarSeleccionMulti()"> 257 - OLT-HUAWEI-GARCIA-VILLAROSA(Wave)</label>
+                <label class="ms-option"><input type="checkbox" value="267 - OLT-HUAWEI-MARIÑO-BLUESKY-II(Wave)" onchange="actualizarSeleccionMulti()"> 267 - OLT-HUAWEI-MARIÑO-BLUESKY-II(Wave)</label>
+                <label class="ms-option"><input type="checkbox" value="270 - OLT-HUAWEI-MARGARITA-TUBORES(W" onchange="actualizarSeleccionMulti()"> 270 - OLT-HUAWEI-MARGARITA-TUBORES(W</label>
+                <label class="ms-option"><input type="checkbox" value="271 - OLT-HUAWEI-CARUPANO-II Wave" onchange="actualizarSeleccionMulti()"> 271 - OLT-HUAWEI-CARUPANO-II Wave</label>
+
+                <div class="ms-group-title">OLT ZONAS</div>
+                <label class="ms-option"><input type="checkbox" value="OLT3-N4BDR-ZONA3" onchange="actualizarSeleccionMulti()"> OLT3-N4BDR-ZONA3</label>
+                <label class="ms-option"><input type="checkbox" value="OLT4-Z2-VENETUR" onchange="actualizarSeleccionMulti()"> OLT4-Z2-VENETUR</label>
+                <label class="ms-option"><input type="checkbox" value="OLT6-ZONA1" onchange="actualizarSeleccionMulti()"> OLT6-ZONA1</label>
+                <label class="ms-option"><input type="checkbox" value="OLT1-N5BDPZ-ZONA3" onchange="actualizarSeleccionMulti()"> OLT1-N5BDPZ-ZONA3</label>
+                <label class="ms-option"><input type="checkbox" value="OLT2-N5BDPZ-ZONA3" onchange="actualizarSeleccionMulti()"> OLT2-N5BDPZ-ZONA3</label>
+                <label class="ms-option"><input type="checkbox" value="OLT1-R3-ZONA1" onchange="actualizarSeleccionMulti()"> OLT1-R3-ZONA1</label>
+                <label class="ms-option"><input type="checkbox" value="OLT2-R3-ZONA1" onchange="actualizarSeleccionMulti()"> OLT2-R3-ZONA1</label>
+                <label class="ms-option"><input type="checkbox" value="OLT5-N4BDR-ZONA3" onchange="actualizarSeleccionMulti()"> OLT5-N4BDR-ZONA3</label>
+                <label class="ms-option"><input type="checkbox" value="OLT2-R2-ZONA1-MGTA" onchange="actualizarSeleccionMulti()"> OLT2-R2-ZONA1-MGTA</label>
+                <label class="ms-option"><input type="checkbox" value="OLT1-N9-R1-ZONA3-MGTA" onchange="actualizarSeleccionMulti()"> OLT1-N9-R1-ZONA3-MGTA</label>
+                <label class="ms-option"><input type="checkbox" value="OLT4-N4BDR-ZONA3" onchange="actualizarSeleccionMulti()"> OLT4-N4BDR-ZONA3</label>
+
+                <div class="ms-group-title">HUB VSOL</div>
+                <label class="ms-option"><input type="checkbox" value="Hub VSol - Boca del Rio" onchange="actualizarSeleccionMulti()"> Hub VSol - Boca del Rio</label>
+                <label class="ms-option"><input type="checkbox" value="Hub VSol - Boca de Pozo" onchange="actualizarSeleccionMulti()"> Hub VSol - Boca de Pozo</label>
+                <label class="ms-option"><input type="checkbox" value="Hub VSol - La Isleta" onchange="actualizarSeleccionMulti()"> Hub VSol - La Isleta</label>
+
+                <div class="ms-group-title">SERVICIOS DE ANTENA</div>
+		<label class="ms-option"><input type="checkbox" value="Nodo Villamar" onchange="actualizarSeleccionMulti()"> Nodo Villamar</label>
+		<label class="ms-option"><input type="checkbox" value="Nodo Spartasuits" onchange="actualizarSeleccionMulti()"> Nodo Spartasuits</label>
+		<label class="ms-option"><input type="checkbox" value="Nodo Riomar" onchange="actualizarSeleccionMulti()"> Nodo Riomar</label>
+		<label class="ms-option"><input type="checkbox" value="Nodo Espartacus" onchange="actualizarSeleccionMulti()"> Nodo Espartacus</label>
+		<label class="ms-option"><input type="checkbox" value="Nodo Casa Alta" onchange="actualizarSeleccionMulti()"> Nodo Casa Alta</label>
+		<label class="ms-option"><input type="checkbox" value="Nodo Genoves" onchange="actualizarSeleccionMulti()"> Nodo Genoves</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+      <label>Tarjeta</label>
+      <input type="text" id="tarjeta" placeholder="Ej: 1">
+    </div>
+    <div>
+      <label>Pon</label>
+      <input type="text" id="pon" placeholder="Ej: 5">
+    </div>
+    
+    <!-- FILA 2: Caja NAP a la izquierda, Coordenadas a la derecha -->
+    <div>
+      <label>Caja NAP</label>
+      <input type="text" id="cajaNap" placeholder="Ej: NAP-045">
+    </div>
+    <div>
+      <label>Coordenadas de NAP/AFT</label>
+      <input type="text" id="coordenadasNap" placeholder="Ej: 10.9983, -63.8030">
+    </div>
+
+    <!-- FILA 3: Usuarios a la izquierda, Ticket a la derecha -->
+    <div>
+      <label>USUARIOS ASOCIADOS <small style="color:#607D8B;font-weight:400">(opcional)</small></label>
+      <input type="number" id="usuarios" min="0" placeholder="Ej: 32">
+    </div>
+    <div>
+      <label>TICKET <small style="color:#607D8B;font-weight:400">(opcional)</small></label>
+      <input type="text" id="ticket" placeholder="Ej: TK-2026-0042">
+    </div>
+
+    <!-- FILA 4: Observación (Ocupa todo el ancho) -->
+    <div class="full">
+      <label>OBSERVACIÓN <span class="req">*</span></label>
+      <textarea id="observacion" placeholder="Detalles del evento, acciones realizadas, etc." required></textarea>
+    </div>
+    
+    <div class="full" id="divAcciones" style="display:none;">
+      <label>ACCIONES IMPLEMENTADAS (Opcional)</label>
+      <textarea id="acciones" placeholder="Ej: Se reinició el equipo, se cambiaron fusibles..."></textarea>
+    </div>
+  </div> <!-- 👈 ESTE CIERRE ES VITAL: Cierra la cuadrícula de 2 columnas -->
+
+  <!-- El botón va AFUERA de la cuadrícula, abajo de todo -->
+  <button type="submit" class="btn">✅ REGISTRAR EVENTO</button>
+</form>
+
+    <div id="mensaje" class="msg"></div>
+    
+    <div style="margin-top:15px; display:none;" id="waContainer">
+      <button class="btn btn-wa" onclick="copiarParaWhatsApp()">📱 Copiar Resumen para WhatsApp</button>
+    </div>
+
+    <div class="stats" id="stats">
+      <div class="stat"><div class="num" id="stTotal">0</div><div class="lbl">Total eventos</div></div>
+      <div class="stat"><div class="num" id="stActivos">0</div><div class="lbl">En proceso</div></div>
+      <div class="stat"><div class="num" id="stCerrados">0</div><div class="lbl">Finalizados</div></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-exp" onclick="exportarExcel()">📥 Excel</button>
+      <button class="btn btn-imp" onclick="document.getElementById('fileInput').click()">📤 Importar</button>
+      <button class="btn btn-sec" onclick="exportarJSON()">💾 JSON</button>
+      <button class="btn btn-del" onclick="limpiarTodo()">🗑️ Borrar</button>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none;" onchange="importarExcel(event)">
+
+    <h3 style="margin-top:30px;color:#1F3864;font-size:16px">📊 Registro consolidado</h3>
+    <div style="overflow-x: auto;">
+      <table id="tablaRegistros">
+        <thead>
+          <tr>
+            <th>ID</th><th>Fecha</th><th>Hora Inicio</th><th>Tipo</th><th>HUB / OLT</th><th>Ticket</th><th>T. Afectación</th><th>Estado</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"><tr><td colspan="9" class="empty">Sin registros aún</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="report-footer" id="reportFooter">
+    <div class="footer-body" id="footerBody">Esperando registro de evento…</div>
+    <div class="firma">
+      <span>🕐 Emitido: <b id="footerTime">—</b></span>
+      <span>📡 Sistema de Fallas de Red</span>
+    </div>
+  </footer>
+</div>
+
+<div id="modalUpdate" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span id="modalTitle">✏️ Actualizar Evento</span>
+      <span class="modal-close" onclick="cerrarModal()">✕</span>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="modalTimestamp">
+      <input type="hidden" id="modalIdOriginal">
+      <div class="form-group">
+        <label>ID EVENTO</label>
+        <input type="text" id="modalIdEvento" readonly style="background:#eef2f8; font-weight:bold;">
+      </div>
+      <div class="form-group">
+        <label>ANALISTA <small style="color:#607D8B;font-weight:400">(puedes mantener o cambiar)</small></label>
+        <select id="modalAnalista">
+          <option value="">-- Mantener / Sin analista --</option>
+          <option value="Adaylouis Marin">Adaylouis Marin</option>
+          <option value="Juan valerio">Juan valerio</option>
+          <option value="David Moro">David Moro</option>
+          <option value="Verónica Cardona">Verónica Cardona</option>
+          <option value="Kailyn Carrion">Kailyn Carrion</option>
+          <option value="leonardo Hernandez">leonardo Hernandez</option>
+          <option value="Oscar Ramirez">Oscar Ramirez</option>
+          <option value="Diego Indriago">Diego Indriago</option>
+          <option value="Valentina Noriega">Valentina Noriega</option>
+          <option value="Wuilmer Pulgar">Wuilmer Pulgar</option>
+          <option value="Yunay Carreño">Yunay Carreño</option>
+          <option value="Andres Rodriguez">Andres Rodriguez</option>
+          <option value="Lucia Silva">Lucia Silva</option>
+          <option value="Moises Gomez">Moises Gomez</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>NUEVO ESTADO</label>
+        <select id="modalEstado">
+          <option value="ACTUALIZACION">🔵 ACTUALIZACIÓN</option>
+          <option value="FINALIZACION">🟢 FINALIZACIÓN</option>
+        </select>
+      </div>
+      
+      <!-- NUEVO CAMPO DE FECHA DE ACCIÓN -->
+      <div class="form-group" style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+            <label>FECHA DE ACCIÓN</label>
+            <input type="date" id="modalFechaAccion" required>
+        </div>
+        <div style="flex: 1;">
+            <label>HORA DE ACCIÓN</label>
+            <input type="time" id="modalHoraAccion" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>TIEMPO DE AFECTACIÓN (Calculado automáticamente - Editable)</label>
+        <input type="text" id="modalTiempo" placeholder="Calculando...">
+      </div>
+      <div class="form-group">
+        <label>OBSERVACIÓN DEL CAMBIO DE ESTADO</label>
+        <textarea id="modalObservacion" rows="2" placeholder="Detalles del por qué del cambio..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>ACCIONES IMPLEMENTADAS (Opcional)</label>
+        <textarea id="modalAcciones" rows="2" placeholder="Ej: Se reinició el equipo, se cambiaron fusibles..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-save" onclick="guardarActualizacion()">💾 Guardar Registro</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6AMNU-Yyf9Yw0ZV5lA3ps5ytx-57ZFE0i6oTLTj3GjN54uPCqVzL4rXcWlgXRRuPn5w/exec'; 
+
+const STORAGE_KEY = 'fallasRedData';
+const PREFIX = 'EV';
+
+const $ = id => document.getElementById(id);
+const hoy = () => new Date().toISOString().slice(0,10);
+const ahora = () => {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+};
+
+let ultimoRegistroCargado = null;
+
+function toast(msg, tipo='ok'){
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + tipo;
+  setTimeout(()=> t.className = 'toast ' + tipo, 3000);
+}
+
+function cargarDatos(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function guardarDatos(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+function siguienteId(){
+  const registros = cargarDatos();
+  let maxConsecutivo = 0;
+
+  registros.forEach(r => {
+    if (r.id && r.id.startsWith('EV-')) {
+      const partes = r.id.split('-');
+      if (partes.length === 3) {
+        const num = parseInt(partes[2], 10);
+        if (!isNaN(num) && num > maxConsecutivo) {
+          maxConsecutivo = num;
+        }
+      }
+    }
+  });
+
+  const siguienteNum = maxConsecutivo + 1;
+  const numFormateado = String(siguienteNum).padStart(7, '0');
+  return `EV-I-${numFormateado}`;
+}
+
+function obtenerSaludoPorHora(horaStr) {
+  if (!horaStr) return 'Buenas tardes';
+  const [horas, minutos] = horaStr.split(':').map(Number);
+  if (horas >= 5 && horas < 12) return 'Buenos días';
+  if (horas >= 12 && horas < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function obtenerFraseIncidencia(estado) {
+  switch (estado) {
+    case 'INICIO':
+      return 'la presente tiene como finalidad informar, que estamos presentando la siguiente incidencia:';
+    case 'ACTUALIZACION':
+      return 'se envía estatus actualizado referente a la incidencia:';
+    case 'FINALIZACION':
+      return 'la presente tiene como finalidad informar, que se solventó la incidencia:';
+    default:
+      return 'la presente tiene como finalidad informar, que estamos presentando la siguiente incidencia:';
+  }
+}
+
+const getLibroIcon = () => `<span class="custom-icon">🔹</span>`;
+
+function generarMensajeFooter(datos = null){
+  const ahoraFecha = new Date();
+  const horaParaSaludo = datos ? ((datos.estado !== 'INICIO' && datos.horaAccion) ? datos.horaAccion : ahora()) : ahora();
+  const saludo = obtenerSaludoPorHora(horaParaSaludo); 
+
+  const horaEmitida = ahoraFecha.toLocaleString('es-VE', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric',
+    hour:'2-digit', minute:'2-digit', second:'2-digit'
+  });
+
+  let texto = ``;
+  // Solo agregar el nombre del analista si existe y no está vacío
+  if (datos && datos.analista && datos.analista.trim() !== '') {
+    texto += `${datos.analista}\n`;
+  }
+  texto += `${saludo} estimados,\n`;
+
+  if (datos){
+    const icono = datos.estado === 'INICIO' ? '🟡' :
+                  datos.estado === 'ACTUALIZACION' ? '🔵' : '🟢';
+
+    const fraseIncidencia = obtenerFraseIncidencia(datos.estado);
+    texto += `${fraseIncidencia} ${datos.tipoFalla} // ${datos.olt}\n\n`;
+    texto += `Datos asociados:\n\n`;
+
+    const ico = getLibroIcon();
+
+    let bloqueDatos = 
+`${ico} ID EVENTO ......... ${datos.id}
+${ico} FECHA DE INICIO ... ${datos.fecha}
+${ico} HORA DE INICIO .... ${datos.hora}
+${ico} TIPO DE FALLA ..... ${datos.tipoFalla}
+${ico} HUB / OLT ......... ${datos.olt}`;
+
+    if(datos.estado !== 'INICIO' && datos.horaAccion) {
+        bloqueDatos += `\n${ico} HORA ${datos.estado} ${datos.horaAccion}`;
+    }
+
+    if(datos.tarjeta) bloqueDatos += `\n${ico} TARJETA ........... ${datos.tarjeta}`;
+    if(datos.pon) bloqueDatos += `\n${ico} PON ............... ${datos.pon}`;
+    if(datos.cajaNap) bloqueDatos += `\n${ico} CAJA NAP .......... ${datos.cajaNap}`;
+    if(datos.coordenadasNap) bloqueDatos += `\n${ico} COORDENADAS NAP ... ${datos.coordenadasNap}`;
+    if(datos.tiempoAfectacion) bloqueDatos += `\n${ico} T. AFECTACIÓN ..... ${datos.tiempoAfectacion}`;
+    if(datos.usuarios !== '' && datos.usuarios !== undefined) bloqueDatos += `\n${ico} USUARIOS AFECTADOS  ${datos.usuarios}`;
+    if(datos.ticket) bloqueDatos += `\n${ico} TICKET ............ ${datos.ticket}`;
+    
+    bloqueDatos += `\n${ico} OBSERVACIÓN ....... ${datos.observacion}`;
+
+    if(datos.acciones) bloqueDatos += `\n${ico} ACCIONES ........ ${datos.acciones}`;
+
+    bloqueDatos += `\n${ico} ESTADO ............ ${icono} ${datos.estado}`;
+
+const cierre = datos.estado === 'FINALIZACION'
+  ? 'Se finaliza evento. Para su información.'
+  : 'Se requiere su apoyo para gestionar las acciones necesarias para la atención de la incidencia reportada.';
+
+texto += bloqueDatos + `\n\n${cierre}`;
+
+  } else {
+    texto += `la presente tiene como finalidad informar...\n\nSin eventos registrados en esta sesión todavía. Complete el formulario y presione "REGISTRAR EVENTO" para generar el reporte.`;
+  }
+
+  const footerBody = $('footerBody');
+  const footerTime = $('footerTime');
+
+  const saludoHtml = `<span class="saludo">${saludo} estimados,</span>`;
+  let resto = texto
+    .replace(`${saludo} estimados,\n`, '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    
+  resto = resto.replace(/&lt;span class="custom-icon"&gt;🔹&lt;\/span&gt;/g, '<span class="custom-icon">🔹</span>');
+
+  // Solo agregar el nombre del analista si existe y no está vacío
+  let htmlAnalista = '';
+  if (datos && datos.analista && datos.analista.trim() !== '') {
+    htmlAnalista = `<div style="font-weight:700; color:#FFD166; margin-bottom:4px;">${datos.analista}</div>`;
+  }
+
+  footerBody.innerHTML = htmlAnalista + saludoHtml + `\n` + resto;
+  footerTime.textContent = horaEmitida;
+}
+
+function enviarADrive(datos) {
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('TU_URL')) return false;
+
+  return new Promise((resolve) => {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = GOOGLE_SCRIPT_URL;
+    form.target = 'iframeOculto'; 
+
+    for (const key in datos) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = datos[key] !== undefined ? datos[key] : '';
+      form.appendChild(input);
+    }
+
+    let iframe = document.getElementById('iframeOculto');
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.name = 'iframeOculto';
+      iframe.id = 'iframeOculto';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+    
+    setTimeout(() => {
+      document.body.removeChild(form);
+      resolve(true); 
+    }, 2000); 
+  });
+}
+
+// ===== FUNCIÓN CORREGIDA PARA CALCULAR TIEMPO CON DÍAS =====
+function calcularTiempoTranscurrido(fechaInicioStr, horaInicio, fechaFinStr, horaFin) {
+  if(!horaInicio || !horaFin || !fechaInicioStr || !fechaFinStr) return '';
+  
+  const normalizarHora = (horaStr) => {
+    if (!horaStr) return "00:00";
+    let hStr = String(horaStr).toLowerCase().trim();
+    let esPM = hStr.includes('p.m.') || hStr.includes('pm');
+    let esAM = hStr.includes('a.m.') || hStr.includes('am');
+    
+    let soloNumeros = hStr.replace(/[^0-9:]/g, '').trim();
+    let [h, m] = soloNumeros.split(':');
+    
+    let horas = parseInt(h, 10) || 0;
+    let minutos = parseInt(m, 10) || 0;
+    
+    if (esPM && horas < 12) horas += 12;
+    if (esAM && horas === 12) horas = 0;
+    
+    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+  };
+
+  const hInicioLimpia = normalizarHora(horaInicio);
+  const hFinLimpia = normalizarHora(horaFin);
+
+  const fechaInicio = new Date(`${fechaInicioStr}T${hInicioLimpia}:00`);
+  const fechaFin = new Date(`${fechaFinStr}T${hFinLimpia}:00`);
+  
+  const diffMs = fechaFin - fechaInicio;
+  
+  if (diffMs < 0) return 'Error: Fecha final menor a la inicial';
+  
+  const diffMins = Math.floor(diffMs / 60000);
+  
+  if (diffMins < 1) return 'Menos de 1 minuto';
+  
+  const dias = Math.floor(diffMins / 1440);
+  const horas = Math.floor((diffMins % 1440) / 60);
+  const mins = diffMins % 60;
+  
+  let res = '';
+  if (dias > 0) res += `${dias} día${dias > 1 ? 's' : ''} `;
+  if (horas > 0) res += `${horas} hora${horas > 1 ? 's' : ''} `;
+  if (mins > 0) res += `${mins} minuto${mins > 1 ? 's' : ''}`;
+  
+  return res.trim() || 'Menos de 1 minuto';
+}
+
+/* ===== LÓGICA MULTI SELECT HUB/OLT ===== */
+function toggleMultiSelect(e){
+  if (e) e.stopPropagation();
+  $('multiOlt').classList.toggle('open');
+}
+document.addEventListener('click', function(e){
+  const ms = document.getElementById('multiOlt');
+  if (ms && !ms.contains(e.target)) ms.classList.remove('open');
+});
+
+function getOltSeleccionados(){
+  return Array.from(document.querySelectorAll('#msOptions input[type="checkbox"]:checked'))
+    .map(cb => cb.value);
+}
+
+function actualizarSeleccionMulti(){
+  const valores = getOltSeleccionados();
+  const chips = $('msChips');
+  if (!chips) return;
+  if (valores.length === 0){
+    chips.innerHTML = '<span class="ms-placeholder">-- Seleccionar OLT/HUB --</span>';
+  } else {
+    chips.innerHTML = valores.map(v => `
+      <span class="ms-chip" title="${v}">
+        <span>${v}</span>
+        <span class="ms-x" onclick="quitarOltSeleccion('${v.replace(/'/g,"\\'")}',event)" title="Quitar">✕</span>
+      </span>`).join('');
+  }
+}
+
+function quitarOltSeleccion(v, e){
+  if (e) e.stopPropagation();
+  const cb = Array.from(document.querySelectorAll('#msOptions input[type="checkbox"]'))
+    .find(c => c.value === v);
+  if (cb){ cb.checked = false; actualizarSeleccionMulti(); }
+}
+
+function setOltSeleccionados(valor){
+  let arr = [];
+  if (Array.isArray(valor)) arr = valor;
+  else if (valor) arr = String(valor).split(' / ').map(s => s.trim()).filter(Boolean);
+  document.querySelectorAll('#msOptions input[type="checkbox"]').forEach(cb => {
+    cb.checked = arr.includes(cb.value);
+  });
+  actualizarSeleccionMulti();
+}
+
+function limpiarOltSeleccion(){ setOltSeleccionados([]); }
+
+function filtrarOpcionesMulti(texto){
+  const t = texto.toLowerCase().trim();
+  document.querySelectorAll('#msOptions .ms-option').forEach(op => {
+    const label = op.textContent.toLowerCase();
+    op.classList.toggle('hidden', t !== '' && !label.includes(t));
+  });
+  document.querySelectorAll('#msOptions .ms-group-title').forEach(gt => {
+    let n = gt.nextElementSibling, visibles = 0;
+    while (n && !n.classList.contains('ms-group-title')){
+      if (n.classList.contains('ms-option') && !n.classList.contains('hidden')) visibles++;
+      n = n.nextElementSibling;
+    }
+    gt.style.display = visibles ? '' : 'none';
+  });
+}
+
+function alCambiarEstado() {
+  const estado = $('estado').value;
+  const divHoraAccion = $('divHoraAccion');
+  const divTiempo = $('divTiempoAfectacion');
+  const divAcciones = $('divAcciones');
+  const inputFecha = $('fecha');
+  const inputHora = $('hora');
+  const inputId = $('idEvento');
+
+  if (estado === 'INICIO') {
+    divHoraAccion.style.display = 'none';
+    divTiempo.style.display = 'none';
+    divAcciones.style.display = 'none';
+    
+    inputFecha.readOnly = false;
+    inputHora.readOnly = false;
+    inputId.readOnly = true;
+    inputId.style.background = '#eef2f8';
+    inputId.value = siguienteId();
+    
+    $('tiempoAfectacion').value = '';
+    $('horaAccion').value = '';
+
+  } else if (estado === 'ACTUALIZACION' || estado === 'FINALIZACION') {
+    divHoraAccion.style.display = 'block';
+    divTiempo.style.display = 'block';
+    divAcciones.style.display = 'block';
+    
+    if (!inputId.value || inputId.value.includes('-I-') || !inputId.value.startsWith('EV-')) {
+      inputId.value = 'EV-A-0000000'; 
+      inputId.readOnly = false; 
+      inputId.style.background = '#fff';
+    } else {
+      inputId.readOnly = false;
+      inputId.style.background = '#fff';
+    }
+    
+    $('horaAccion').value = ahora();
+    
+    const idActual = inputId.value;
+    const registros = cargarDatos();
+    const historial = registros.filter(r => r.id === idActual);
+    
+    if (historial.length > 0) {
+      historial.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      const primerRegistro = historial[0];
+      
+      inputFecha.value = primerRegistro.fecha;
+      inputHora.value = primerRegistro.hora;
+      inputFecha.readOnly = true;
+      inputHora.readOnly = true;
+      calcularTiempoFormulario();
+    } else {
+      inputFecha.readOnly = false;
+      inputHora.readOnly = false;
+    }
+  } else {
+    divHoraAccion.style.display = 'none';
+    divTiempo.style.display = 'none';
+    divAcciones.style.display = 'none';
+    inputFecha.readOnly = false;
+    inputHora.readOnly = false;
+    inputId.readOnly = true;
+    inputId.style.background = '#eef2f8';
+    $('tiempoAfectacion').value = '';
+    $('horaAccion').value = '';
+  }
+}
+
+function calcularTiempoFormulario() {
+  const fecha = $('fecha').value;
+  const horaInicio = $('hora').value;
+  const horaAccion = $('horaAccion').value;
+  const hoyStr = hoy(); // Asumimos que la acción es hoy en el form principal
+  
+  if(fecha && horaInicio && horaAccion) {
+    $('tiempoAfectacion').value = calcularTiempoTranscurrido(fecha, horaInicio, hoyStr, horaAccion);
+  }
+}
+
+$('idEvento').addEventListener('input', function() {
+    const estado = $('estado').value;
+    if (estado !== 'INICIO') {
+        let idBuscar = this.value.trim();
+        
+        let idNormalizado = idBuscar;
+        if (/^\d+$/.test(idBuscar)) {
+            idNormalizado = `EV-X-${idBuscar.padStart(7, '0')}`;
+        } else {
+            const partes = idBuscar.split('-');
+            if (partes.length === 3) {
+                idNormalizado = `EV-X-${partes[2]}`;
+            }
+        }
+
+        const todos = cargarDatos();
+        const coincidencias = todos.filter(r => {
+            const partesR = r.id.split('-');
+            return partesR.length === 3 && partesR[2] === idNormalizado.split('-')[2];
+        });
+
+        if (coincidencias.length > 0) {
+            coincidencias.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            const primerRegistro = coincidencias[0];
+            
+            const letraActual = estado === 'ACTUALIZACION' ? 'A' : 'F';
+            const idFormateado = `EV-${letraActual}-${primerRegistro.id.split('-')[2]}`;
+            this.value = idFormateado;
+            
+            $('fecha').value = primerRegistro.fecha;
+            $('hora').value = primerRegistro.hora;
+            $('fecha').readOnly = true;
+            $('hora').readOnly = true;
+            calcularTiempoFormulario();
+        } else {
+            $('fecha').readOnly = false;
+            $('hora').readOnly = false;
+        }
+    }
+});
+$('hora').addEventListener('change', calcularTiempoFormulario);
+
+$('formFalla').addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const estado = $('estado').value;
+  const idEvento = $('idEvento').value.trim();
+  
+  const datos = {
+    id: idEvento,
+    estado: estado,
+    analista: $('analista').value, // Puede estar vacío
+    fecha: $('fecha').value,
+    hora: $('hora').value, 
+    horaAccion: estado !== 'INICIO' ? $('horaAccion').value : '', 
+    tipoFalla: $('tipoFalla').value,
+    olt: getOltSeleccionados().join(' / '),
+    tarjeta: $('tarjeta').value.trim(),
+    pon: $('pon').value.trim(),
+    cajaNap: $('cajaNap').value.trim(),
+    coordenadasNap: $('coordenadasNap').value.trim(),
+    usuarios: $('usuarios').value.trim() === '' ? '' : Number($('usuarios').value),
+    ticket: $('ticket').value.trim(),
+    tiempoAfectacion: estado !== 'INICIO' ? $('tiempoAfectacion').value : '', 
+    observacion: $('observacion').value.trim(),
+    acciones: estado !== 'INICIO' ? $('acciones').value.trim() : '',
+    timestamp: new Date().toISOString(),
+    tipoRegistro: estado
+  };
+
+  if (!datos.estado) return toast('Selecciona el estado del evento','err');
+  if (!datos.id) return toast('Ingresa un ID de evento','err');
+  if (!datos.olt) return toast('Selecciona al menos un HUB / OLT','err');
+  
+  if (!/^EV-[IAF]-\d{7}$/.test(datos.id)) {
+    return toast('ID inválido. Sigue el formato EV-X-0000000.', 'err');
+  }
+
+  if (window._editandoTimestamp) {
+    const limpios = cargarDatos().filter(r => r.timestamp !== window._editandoTimestamp);
+    guardarDatos(limpios);
+    window._editandoTimestamp = null;
+  }
+
+  const registros = cargarDatos();
+  const existeInicio = registros.some(r => r.id === datos.id && r.tipoRegistro === 'INICIO');
+
+  if (datos.estado === 'INICIO' && existeInicio) {
+    return toast('El ID ya existe como INICIO. Selecciona ACTUALIZACIÓN o FINALIZACIÓN.','err');
+  }
+  
+  if (datos.estado !== 'INICIO' && !datos.horaAccion) {
+    return toast('Debes ingresar la hora de la acción.', 'err');
+  }
+
+  const btnSubmit = e.target.querySelector('button[type="submit"]');
+  btnSubmit.disabled = true;
+  btnSubmit.textContent = '⏳ GUARDANDO...';
+
+  registros.push(datos);
+  guardarDatos(registros);
+
+  ultimoRegistroCargado = datos;
+  mostrarMensaje(datos);
+  generarMensajeFooter(datos);
+  renderTabla();
+  actualizarStats();
+
+  const enviado = await enviarADrive(datos);
+  
+  if (enviado) {
+    toast('✅ Evento guardado en Google Drive y localmente');
+  } else {
+    toast('⚠️ Guardado localmente (Fallo conexión con Drive)', 'err');
+  }
+
+  $('formFalla').reset();
+  limpiarOltSeleccion();
+  $('fecha').value = hoy();
+  $('hora').value = ahora();
+  $('idEvento').value = siguienteId();
+  $('idEvento').style.background = '#eef2f8';
+  $('idEvento').readOnly = true;
+  window._editandoTimestamp = null;
+  alCambiarEstado();
+
+  btnSubmit.disabled = false;
+  btnSubmit.textContent = '✅ REGISTRAR EVENTO';
+});
+
+function abrirModalActualizar(idEvento, forzarFinalizacion = false) {
+  const registros = cargarDatos();
+  const historial = registros.filter(r => r.id === idEvento);
+  
+  if (historial.length === 0) return toast('No se encontró el historial del evento', 'err');
+  
+  historial.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const eventoBase = historial[0];
+
+  $('modalTimestamp').value = idEvento;
+  $('modalIdOriginal').value = idEvento;
+  $('modalIdEvento').value = idEvento;
+  $('modalObservacion').value = '';
+  $('modalAcciones').value = '';
+  
+  $('modalAnalista').value = eventoBase.analista || '';
+  
+  if (forzarFinalizacion) {
+      $('modalTitle').textContent = '🟢 Finalizar Evento';
+      $('modalEstado').value = 'FINALIZACION';
+  } else {
+      $('modalTitle').textContent = '✏️ Actualizar Evento';
+      $('modalEstado').value = 'ACTUALIZACION';
+  }
+
+  // Cargamos la fecha y hora actuales por defecto
+  const hoyStr = hoy();
+  const horaActual = ahora();
+  
+  $('modalFechaAccion').value = hoyStr;
+  $('modalHoraAccion').value = horaActual;
+  
+  // Calculamos usando la nueva función con fecha
+  const tiempoCalculado = calcularTiempoTranscurrido(eventoBase.fecha, eventoBase.hora, hoyStr, horaActual);
+  $('modalTiempo').value = tiempoCalculado || 'Calculando...';
+
+  // Recalcular si el usuario cambia la fecha o la hora
+  const recalcular = () => {
+      const f = $('modalFechaAccion').value;
+      const h = $('modalHoraAccion').value;
+      if(f && h) {
+          const nuevoTiempo = calcularTiempoTranscurrido(eventoBase.fecha, eventoBase.hora, f, h);
+          $('modalTiempo').value = nuevoTiempo || 'Menos de 1 minuto';
+      }
+  };
+
+  $('modalFechaAccion').onchange = recalcular;
+  $('modalHoraAccion').onchange = recalcular;
+
+  $('modalUpdate').classList.add('show');
+}
+
+function cerrarModal() {
+  $('modalUpdate').classList.remove('show');
+}
+
+async function guardarActualizacion() {
+  const idEventoOriginal = $('modalIdOriginal').value;
+  const nuevoEstado = $('modalEstado').value;
+  const fechaAccion = $('modalFechaAccion').value;
+  const horaAccion = $('modalHoraAccion').value;
+  const tiempo = $('modalTiempo').value.trim();
+  const observacion = $('modalObservacion').value.trim();
+  const acciones = $('modalAcciones').value.trim();
+  const analistaSeleccionado = $('modalAnalista').value;
+
+  if (!fechaAccion) return toast('Por favor, ingresa la fecha de la acción', 'err');
+  if (!horaAccion) return toast('Por favor, ingresa la hora de la acción', 'err');
+  if (!observacion) return toast('Por favor, escribe una observación del cambio', 'err');
+
+  const registros = cargarDatos();
+  const historial = registros.filter(r => r.id === idEventoOriginal);
+  
+  if (historial.length === 0) return toast('Error: Evento base no encontrado', 'err');
+  
+  historial.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const eventoBase = historial[0];
+
+  const partesId = idEventoOriginal.split('-');
+  const correlativo = partesId[2];
+  const letraEstado = nuevoEstado === 'ACTUALIZACION' ? 'A' : 'F';
+  const nuevoIdEvento = `EV-${letraEstado}-${correlativo}`;
+
+  const analistaFinal = analistaSeleccionado !== '' ? analistaSeleccionado : (eventoBase.analista || '');
+
+  const nuevoRegistro = {
+    ...eventoBase,
+    id: nuevoIdEvento,
+    estado: nuevoEstado,
+    analista: analistaFinal,
+    fechaAccion: fechaAccion, // Guardamos la fecha de la acción
+    horaAccion: horaAccion, 
+    tiempoAfectacion: tiempo,
+    observacion: observacion,
+    acciones: acciones,
+    timestamp: new Date().toISOString(),
+    tipoRegistro: nuevoEstado
+  };
+
+  registros.push(nuevoRegistro);
+  guardarDatos(registros);
+
+  ultimoRegistroCargado = nuevoRegistro;
+
+  cerrarModal();
+  renderTabla();
+  actualizarStats();
+  generarMensajeFooter(nuevoRegistro);
+  mostrarMensaje(nuevoRegistro);
+
+  const enviado = await enviarADrive(nuevoRegistro);
+  if (enviado) {
+    toast(`✅ Evento ${nuevoEstado} guardado en Drive`);
+  } else {
+    toast(`⚠️ ${nuevoEstado} guardado localmente (Fallo conexión)`, 'err');
+  }
+}
+
+function renderTabla(){
+  const todosLosRegistros = cargarDatos();
+  const eventosMap = new Map();
+  
+  // 1. Consolidar el último estado de cada evento
+  todosLosRegistros.forEach(r => {
+    const partes = r.id.split('-');
+    const idBase = partes.length === 3 ? `EV-X-${partes[2]}` : r.id;
+
+    if (!eventosMap.has(idBase)) {
+      eventosMap.set(idBase, []);
+    }
+    eventosMap.get(idBase).push(r);
+  });
+
+  const eventosConsolidados = Array.from(eventosMap.values()).map(historial => {
+    historial.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return historial[0]; // Toma el estado más reciente
+  });
+
+  const tbody = $('tbody');
+
+  if (!eventosConsolidados.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin registros aún</td></tr>';
+    return;
+  }
+
+  // 2. Separar eventos pendientes y finalizados
+  const pendientes = eventosConsolidados.filter(r => r.estado !== 'FINALIZACION');
+  const finalizados = eventosConsolidados.filter(r => r.estado === 'FINALIZACION');
+
+  // 3. Agrupar los finalizados por fecha (usando el campo 'fecha')
+  const gruposPorFecha = {};
+  finalizados.forEach(r => {
+    const f = r.fecha ? r.fecha.split('T')[0] : 'Sin Fecha';
+    if (!gruposPorFecha[f]) gruposPorFecha[f] = [];
+    gruposPorFecha[f].push(r);
+  });
+
+  // Ordenar fechas de más reciente a más antigua
+  const fechasOrdenadas = Object.keys(gruposPorFecha).sort((a, b) => new Date(b) - new Date(a));
+  
+  const hoyStr = new Date().toISOString().slice(0, 10);
+
+  // Función interna para generar las celdas de una fila de evento
+  const generarFilaEvento = (r) => {
+    const cls = r.estado === 'INICIO' ? 'tag-ini' : r.estado === 'ACTUALIZACION' ? 'tag-act' : 'tag-fin';
+    const ic = r.estado === 'INICIO' ? '🟡' : r.estado === 'ACTUALIZACION' ? '🔵' : '🟢';
+    
+    let botones = '';
+
+    if (r.estado === 'INICIO') {
+      botones += `<button class="btn-sm" style="background:#6366F1;" onclick="editarEvento('${r.id}')" title="Editar datos">🖊️</button>`;
+    }
+
+    if (r.estado !== 'FINALIZACION') {
+      botones += `<button class="btn-sm btn-update" onclick="abrirModalActualizar('${r.id}', false)" title="Actualizar">✏️</button>`;
+      botones += `<button class="btn-sm btn-finish" onclick="abrirModalActualizar('${r.id}', true)" title="Finalizar">✅</button>`;
+    } else {
+      botones += `<span style="font-size:11px; color:#666;">Cerrado</span>`;
+    }
+
+    botones += `<button class="btn-sm" style="background:#25D366;" onclick="visualizarEvento('${r.id}')" title="Ver y copiar WhatsApp">👁️</button>`;
+    botones += `<button onclick="eliminarEventoCompleto('${r.id}')" title="Eliminar todo" style="background:none;border:none;cursor:pointer;color:#c62828;font-size:16px; margin-left:5px;">✕</button>`;
+
+    return `<tr>
+      <td><b>${r.id}</b></td>
+      <td>${r.fecha}</td>
+      <td>${r.hora}</td>
+      <td>${r.tipoFalla}</td>
+      <td>${(r.olt || '').split(' / ').join('<br>')}</td>
+      <td>${r.ticket || '-'}</td>
+      <td>${r.tiempoAfectacion || '-'}</td>
+      <td><span class="tag ${cls}">${ic} ${r.estado}</span></td>
+      <td style="white-space:nowrap;">${botones}</td>
+    </tr>`;
+  };
+
+  // 4. Construir el HTML
+  let htmlFinal = '';
+
+  // -- SECCIÓN A: EVENTOS PENDIENTES (Iniciados / Actualizados)
+  if (pendientes.length > 0) {
+    htmlFinal += `<tr><td colspan="9" style="background:#fef2f2; color:#991b1b; font-weight:bold; border-left:4px solid #c62828; text-align:left; padding:10px 12px;">🔴 EVENTOS PENDIENTES POR FINALIZAR (${pendientes.length})</td></tr>`;
+    htmlFinal += pendientes.map(generarFilaEvento).join('');
+  }
+
+  // -- SECCIÓN B: HISTÓRICO AGRUPADO POR FECHAS
+  if (fechasOrdenadas.length > 0) {
+    htmlFinal += `<tr><td colspan="9" style="background:#EAF1FB; color:#1F3864; font-weight:bold; border-left:4px solid #2E5C9A; text-align:left; padding:10px 12px;">📁 HISTÓRICO DE EVENTOS FINALIZADOS</td></tr>`;
+
+    fechasOrdenadas.forEach(fecha => {
+      const esHoy = fecha === hoyStr;
+      const eventosDia = gruposPorFecha[fecha];
+      
+      const idToggle = `toggle-fecha-${fecha.replace(/-/g, '')}`;
+      const estiloDisplay = esHoy ? 'table-row' : 'none';
+      const flecha = esHoy ? '▼' : '▶';
+      
+      htmlFinal += `
+        <tr onclick="toggleFilaAcordeon('${idToggle}', this)" style="cursor:pointer; background:#F7FAFF; user-select:none;">
+          <td colspan="9" style="padding:10px 12px; border-bottom:1px solid #B4C6E7;">
+            <span style="font-weight:bold; color:#1F3864; display:flex; justify-content:space-between; align-items:center;">
+              <span>📅 ${fecha} ${esHoy ? '(HOY)' : ''} — <span style="font-weight:400; color:#607D8B;">${eventosDia.length} evento(s) finalizado(s)</span></span>
+              <span id="flecha-${idToggle}" style="font-size:12px; color:#2E5C9A;">${flecha}</span>
+            </span>
+          </td>
+        </tr>
+      `;
+
+      htmlFinal += eventosDia.map(r => {
+        const filaOriginal = generarFilaEvento(r);
+        return filaOriginal.replace('<tr>', `<tr class="fila-acordeon-${idToggle}" style="display:${estiloDisplay};">`);
+      }).join('');
+    });
+  }
+
+  tbody.innerHTML = htmlFinal;
+}
+
+function toggleFilaAcordeon(idToggle, elementoResumen) {
+  const filas = document.querySelectorAll(`.fila-acordeon-${idToggle}`);
+  const flecha = document.getElementById(`flecha-${idToggle}`);
+  
+  if (!filas.length) return;
+  
+  const estaOculto = filas[0].style.display === 'none';
+  
+  filas.forEach(fila => {
+    fila.style.display = estaOculto ? 'table-row' : 'none';
+  });
+  
+  if (flecha) {
+    flecha.textContent = estaOculto ? '▼' : '▶';
+  }
+}
+
+function visualizarEvento(id) {
+  const registros = cargarDatos().filter(r => r.id === id);
+  if (!registros.length) return toast('No se encontró el evento', 'err');
+
+  registros.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const d = registros[0];
+
+  ultimoRegistroCargado = d;         
+  mostrarMensaje(d);                 
+  generarMensajeFooter(d);           
+  $('waContainer').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('Vista previa cargada. Usa el botón verde para copiar.');
+}
+
+function editarEvento(id) {
+  const registros = cargarDatos();
+  const historial = registros.filter(r => r.id === id && r.tipoRegistro === 'INICIO');
+  if (!historial.length) return toast('Solo se puede editar el registro INICIO', 'err');
+
+  const base = historial[0];
+
+  $('estado').value = 'INICIO';
+  alCambiarEstado();
+
+  $('idEvento').value = base.id;
+  $('analista').value = base.analista || '';
+  $('fecha').value = base.fecha;
+  $('hora').value = base.hora;
+  $('tipoFalla').value = base.tipoFalla;
+  $('tarjeta').value = base.tarjeta || '';
+  $('pon').value = base.pon || '';
+  $('cajaNap').value = base.cajaNap || '';
+  $('coordenadasNap').value = base.coordenadasNap || '';
+  $('usuarios').value = base.usuarios;
+  $('ticket').value = base.ticket;
+  $('observacion').value = base.observacion;
+  setOltSeleccionados(base.olt);
+
+  window._editandoTimestamp = base.timestamp;
+
+  toast('Edita los datos y presiona REGISTRAR EVENTO para guardar cambios.');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function eliminarEventoCompleto(id) {
+  const partes = id.split('-');
+  const idBase = partes.length === 3 ? partes[2] : id;
+
+  if (!confirm(`¿Eliminar TODOS los registros del evento ${id}? Esta acción borrará el INICIO, ACTUALIZACIONES y FINALIZACIÓN.`)) return;
+  
+  const registros = cargarDatos().filter(r => {
+    const p = r.id.split('-');
+    return p.length === 3 ? p[2] !== idBase : r.id !== id;
+  });
+  
+  guardarDatos(registros);
+  renderTabla();
+  actualizarStats();
+  toast('Evento eliminado del historial local');
+}
+
+function mostrarMensaje(d){
+  const icono = d.estado === 'INICIO' ? '🟡' : d.estado === 'ACTUALIZACION' ? '🔵' : '🟢';
+  const ico = getLibroIcon();
+
+  let htmlExtra = '';
+  
+  if(d.tarjeta || d.pon) {
+    htmlExtra += `<div class="msg-label">${ico} TARJETA / PON:</div><div class="msg-value">Tarjeta: ${d.tarjeta || '-'} | PON: ${d.pon || '-'}</div>`;
+  }
+
+  if(d.cajaNap) {
+  htmlExtra += `
+    <div class="msg-nap">
+      <span class="msg-label">${ico} CAJA NAP:</span>
+      <div style="margin-top:4px; font-size:13px;">${d.cajaNap}</div>
+    </div>`;
+}
+
+if(d.coordenadasNap) {
+  htmlExtra += `
+    <div class="msg-nap">
+      <span class="msg-label">${ico} COORDENADAS NAP/AFT:</span>
+      <div style="margin-top:4px; font-size:13px;">${d.coordenadasNap}</div>
+    </div>`;
+}
+
+  if(d.tiempoAfectacion) {
+    htmlExtra += `<div class="msg-label">${ico} T. AFECTACIÓN:</div><div class="msg-value">${d.tiempoAfectacion}</div>`;
+  }
+
+  let htmlAcciones = '';
+  if(d.acciones) {
+      htmlAcciones = `
+      <div class="msg-nap" style="border-color:#bfdbfe; background:#eff6ff;">
+        <span class="msg-label" style="color:#1e3a8a;">${ico} ACCIONES IMPLEMENTADAS:</span>
+        <div style="margin-top:4px; font-size:13px; color:#1e3a8a;">${d.acciones}</div>
+      </div>`;
+  }
+
+  let htmlHoraAccion = '';
+  if (d.estado !== 'INICIO' && d.horaAccion) {
+      htmlHoraAccion = `<div class="msg-label">${ico} HORA ${d.estado}:</div><div class="msg-value">${d.horaAccion}</div>`;
+  }
+
+  const htmlAnalista = (d.analista && d.analista.trim() !== '')
+    ? `<div class="msg-label">${ico} ANALISTA:</div><div class="msg-value">${d.analista}</div>`
+    : '';
+
+  // === CONDICIONALES PARA USUARIOS Y TICKET ===
+  const htmlUsuarios = (d.usuarios !== '' && d.usuarios !== undefined && d.usuarios !== null)
+    ? `<div class="msg-label">${ico} USUARIOS:</div><div class="msg-value">${d.usuarios} afectados</div>`
+    : '';
+
+  const htmlTicket = (d.ticket && d.ticket.trim() !== '')
+    ? `<div class="msg-label">${ico} TICKET:</div><div class="msg-value">${d.ticket}</div>`
+    : '';
+
+  const html = `
+    <div class="title">✅ Evento Registrado/Actualizado Exitosamente</div>
+    <div class="msg-grid">
+      ${htmlAnalista}
+      <div class="msg-label">${ico} ID EVENTO:</div><div class="msg-value">${d.id}</div>
+      <div class="msg-label">${ico} FECHA DE INICIO:</div><div class="msg-value">${d.fecha}</div>
+      <div class="msg-label">${ico} HORA DE INICIO:</div><div class="msg-value">${d.hora}</div>
+      
+      ${htmlHoraAccion}
+      
+      <div class="msg-label">${ico} ESTADO:</div><div class="msg-value"><span class="tag ${d.estado==='INICIO'?'tag-ini':d.estado==='ACTUALIZACION'?'tag-act':'tag-fin'}">${icono} ${d.estado}</span></div>
+      <div class="msg-label">${ico} TIPO DE FALLA:</div><div class="msg-value">${d.tipoFalla}</div>
+      <div class="msg-label">${ico} HUB / OLT:</div><div class="msg-value">${(d.olt || '').split(' / ').join('<br>')}</div>
+      
+      ${htmlExtra}
+      
+      ${htmlUsuarios}
+      ${htmlTicket}
+      
+      <div class="msg-nap" style="border-color:#fca5a5; background:#fef2f2;">
+        <span class="msg-label" style="color:#991b1b;">${ico} OBSERVACIÓN:</span>
+        <div style="margin-top:4px; font-size:13px; color:#7f1d1d;">${d.observacion}</div>
+      </div>
+      
+      ${htmlAcciones}
+    </div>
+    <div class="msg-footer">👉 ${d.estado === 'FINALIZACION' ? 'Evento finalizado. Copia el resumen si deseas compartirlo.' : 'Presiona el botón verde de abajo para copiar el resumen y enviarlo por WhatsApp.'}</div>
+  `;
+
+  const box = $('mensaje');
+  box.innerHTML = html;
+  box.classList.add('show');
+  
+  $('waContainer').style.display = 'block';
+  
+  box.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function copiarParaWhatsApp() {
+  if (!ultimoRegistroCargado) return toast('No hay un evento reciente para copiar', 'err');
+  
+  const d = ultimoRegistroCargado;
+  
+  const horaParaSaludo = (d.estado !== 'INICIO' && d.horaAccion) ? d.horaAccion : ahora();
+  const saludo = obtenerSaludoPorHora(horaParaSaludo);
+  const icono = d.estado === 'INICIO' ? '🟡' : d.estado === 'ACTUALIZACION' ? '🔵' : '🟢';
+  const icoWa = '🔹';
+
+  let bloqueDatos = 
+`${icoWa} *ID EVENTO:* ${d.id}
+${icoWa} *FECHA DE INICIO:* ${d.fecha}
+${icoWa} *HORA DE INICIO:* ${d.hora}
+${icoWa} *ESTADO:* ${icono} ${d.estado}
+${icoWa} *TIPO DE FALLA:* ${d.tipoFalla}
+${icoWa} *HUB / OLT:* ${d.olt}`;
+
+  if(d.estado !== 'INICIO' && d.horaAccion) {
+      bloqueDatos += `\n${icoWa} *HORA ${d.estado}:* ${d.horaAccion}`;
+  }
+
+  if(d.tarjeta) bloqueDatos += `\n${icoWa} *TARJETA:* ${d.tarjeta}`;
+  if(d.pon) bloqueDatos += `\n${icoWa} *PON:* ${d.pon}`;
+  if(d.cajaNap) bloqueDatos += `\n${icoWa} *CAJA NAP:* ${d.cajaNap}`;
+  if(d.coordenadasNap) bloqueDatos += `\n${icoWa} *COORDENADAS NAP/AFT:* ${d.coordenadasNap}`;
+  if(d.tiempoAfectacion) bloqueDatos += `\n${icoWa} *T. AFECTACIÓN:* ${d.tiempoAfectacion}`;
+  
+  // === CONDICIONALES PARA USUARIOS Y TICKET EN WHATSAPP ===
+  if(d.usuarios !== '' && d.usuarios !== undefined && d.usuarios !== null) {
+      bloqueDatos += `\n${icoWa} *USUARIOS AFECTADOS:* ${d.usuarios}`;
+  }
+  if(d.ticket && d.ticket.trim() !== '') {
+      bloqueDatos += `\n${icoWa} *TICKET:* ${d.ticket}`;
+  }
+
+  bloqueDatos += 
+`\n\n${icoWa} *OBSERVACIÓN:*
+_${d.observacion}_`;
+
+  if(d.acciones) {
+      bloqueDatos += `\n\n${icoWa} *ACCIONES IMPLEMENTADAS:*\n_${d.acciones}_`;
+  }
+
+const cierreWA = d.estado === 'FINALIZACION'
+  ? 'Se finaliza evento. Para su información.'
+  : 'Se requiere su apoyo para gestionar las acciones necesarias para la atención de la incidencia reportada.';
+
+const fraseIncidencia = obtenerFraseIncidencia(d.estado);
+
+let textoWA = '';
+if (d.analista && d.analista.trim() !== '') {
+  textoWA += `${d.analista}\n`;
+}
+textoWA += 
+`*${saludo} estimados,*
+
+${fraseIncidencia.charAt(0).toUpperCase() + fraseIncidencia.slice(1)}
+*${d.tipoFalla}* en *${d.olt}*
+
+*DATOS ASOCIADOS:*
+
+${bloqueDatos}
+
+${cierreWA}`;
+
+  navigator.clipboard.writeText(textoWA).then(() => {
+    toast('📱 ¡Resumen copiado! Pégalo en WhatsApp.');
+  }).catch(err => {
+    toast('Error al copiar. Intenta de nuevo.', 'err');
+  });
+}
+
+function actualizarStats(){
+  const regs = cargarDatos();
+  
+  const eventosMap = new Map();
+  regs.forEach(r => {
+    const p = r.id.split('-');
+    const idBase = p.length === 3 ? p[2] : r.id;
+    if (!eventosMap.has(idBase) || new Date(r.timestamp) > new Date(eventosMap.get(idBase).timestamp)) {
+      eventosMap.set(idBase, r);
+    }
+  });
+
+  const valores = Array.from(eventosMap.values());
+
+  $('stTotal').textContent = valores.length;
+  $('stActivos').textContent = valores.filter(r => r.estado !== 'FINALIZACION').length;
+  $('stCerrados').textContent = valores.filter(r => r.estado === 'FINALIZACION').length;
+}
+
+function exportarExcel(){
+  const regs = cargarDatos();
+  if (!regs.length) return toast('No hay datos para exportar','err');
+
+  const regsOrdenados = regs.slice().sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  const data = regsOrdenados.map(r => ({
+    ID_EVENTO: r.id,
+    ANALISTA: r.analista || '',
+    TIPO_REGISTRO: r.tipoRegistro,
+    'FECHA DE INICIO': r.fecha,
+    'HORA DE INICIO': r.hora,
+    'HORA ACCION': r.horaAccion || '',
+    'TIPO DE FALLA': r.tipoFalla,
+    'HUB / OLT': r.olt,
+    TARJETA: r.tarjeta || '',
+    PON: r.pon || '',
+    'CAJA NAP': r.cajaNap || '',
+    'COORDENADAS NAP/AFT': r.coordenadasNap || '',
+    'USUARIOS ASOCIADOS': r.usuarios,
+    TICKET: r.ticket,
+    'TIEMPO DE AFECTACIÓN': r.tiempoAfectacion || '',
+    OBSERVACION: r.observacion,
+    'ACCIONES IMPLEMENTADAS': r.acciones || '',
+    ESTADO: r.estado,
+    MARCA_TIEMPO: new Date(r.timestamp).toLocaleString('es-VE')
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws['!cols'] = [{wch:14},{wch:20},{wch:14},{wch:14},{wch:14},{wch:14},{wch:28},{wch:38},{wch:10},{wch:10},{wch:15},{wch:12},{wch:18},{wch:20},{wch:40},{wch:40},{wch:16},{wch:20}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Registro_Fallas');
+
+  const eventosMap = new Map();
+  regs.forEach(r => {
+    const p = r.id.split('-');
+    const idBase = p.length === 3 ? p[2] : r.id;
+    if (!eventosMap.has(idBase) || new Date(r.timestamp) > new Date(eventosMap.get(idBase).timestamp)) {
+      eventosMap.set(idBase, r);
+    }
+  });
+  const valores = Array.from(eventosMap.values());
+
+  const resumen = [
+    ['REPORTE DE FALLAS DE RED', ''],
+    ['Generado', new Date().toLocaleString('es-VE')],
+    ['Saludo emitido', obtenerSaludoPorHora(ahora()) + ' estimados,'],
+    ['', ''],
+    ['Total eventos únicos', valores.length],
+    ['Total acciones registradas', regs.length],
+    ['En proceso', valores.filter(r=>r.estado !== 'FINALIZACION').length],
+    ['Finalizados', valores.filter(r=>r.estado === 'FINALIZACION').length],
+    ['Total usuarios afectados (último estado)', valores.reduce((s,r)=>s+(Number(r.usuarios)||0),0)]
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(resumen);
+  ws2['!cols'] = [{wch:35},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumen');
+
+  const nombre = `FallasRed_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, nombre);
+  toast('📥 Excel generado: ' + nombre);
+}
+
+function importarExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, {type: 'array'});
+      
+      let worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      
+      if (jsonData.length === 0) {
+        toast('El archivo Excel está vacío o no tiene el formato correcto.', 'err');
+        return;
+      }
+
+      const registrosActuales = cargarDatos();
+      let insertados = 0;
+      let duplicados = 0;
+      let errores = 0;
+
+      const getVal = (row, keys) => {
+        for (let key of keys) {
+          for (let rowKey in row) {
+            if (rowKey.trim().toLowerCase() === key.trim().toLowerCase()) {
+              return row[rowKey];
+            }
+          }
+        }
+        return "";
+      };
+
+      jsonData.forEach(row => {
+        const idEvento = getVal(row, ['ID_EVENTO', 'ID', 'ID EVENTO']);
+        const tipoRegistro = getVal(row, ['TIPO_REGISTRO', 'TIPO REGISTRO', 'ESTADO']);
+        const fechaInicio = getVal(row, ['FECHA DE INICIO', 'FECHA']);
+        
+        if (!idEvento || !tipoRegistro || !fechaInicio) {
+          errores++;
+          return; 
+        }
+
+        let tsISO = new Date().toISOString();
+        const marcaTiempo = getVal(row, ['MARCA_TIEMPO', 'MARCA TIEMPO']);
+        if (marcaTiempo) {
+            try {
+                const parts = String(marcaTiempo).split(', ');
+                if (parts.length === 2) {
+                    const dateParts = parts[0].split('/');
+                    const timeParts = parts[1].split(':');
+                    if (dateParts.length === 3 && timeParts.length >= 2) {
+                        const fechaParseada = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}T${timeParts[0]}:${timeParts[1]}:${timeParts[2] || '00'}`);
+                        if (!isNaN(fechaParseada.getTime())) {
+                            tsISO = fechaParseada.toISOString();
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("No se pudo parsear la fecha, usando fecha actual", err);
+            }
+        }
+
+        const nuevoReg = {
+          id: String(idEvento).trim(),
+          analista: String(getVal(row, ['ANALISTA'])).trim(),
+          tipoRegistro: String(tipoRegistro).trim(),
+          estado: String(tipoRegistro).trim(),
+          fecha: String(fechaInicio).trim(),
+          hora: String(getVal(row, ['HORA DE INICIO', 'HORA'])).trim(),
+          horaAccion: String(getVal(row, ['HORA ACCION', 'HORA DE ACCION'])).trim(),
+          tipoFalla: String(getVal(row, ['TIPO DE FALLA', 'FALLA'])).trim(),
+          olt: String(getVal(row, ['HUB / OLT', 'HUB', 'OLT'])).trim(),
+          tarjeta: String(getVal(row, ['TARJETA'])).trim(),
+          pon: String(getVal(row, ['PON'])).trim(),
+          cajaNap: String(getVal(row, ['CAJA NAP', 'NAP'])).trim(),
+	  coordenadasNap: String(getVal(row, ['COORDENADAS NAP/AFT', 'COORDENADAS'])).trim(),
+	  usuarios: getVal(row, ['USUARIOS ASOCIADOS', 'USUARIOS']) !== "" ? Number(getVal(row, ['USUARIOS ASOCIADOS', 'USUARIOS'])) : '',
+          ticket: String(getVal(row, ['TICKET'])).trim(),
+          tiempoAfectacion: String(getVal(row, ['TIEMPO DE AFECTACIÓN', 'T. AFECTACIÓN'])).trim(),
+          observacion: String(getVal(row, ['OBSERVACION', 'OBSERVACIÓN'])).trim(),
+          acciones: String(getVal(row, ['ACCIONES IMPLEMENTADAS', 'ACCIONES'])).trim(),
+          timestamp: tsISO
+        };
+
+        const existe = registrosActuales.some(r => 
+          r.id === nuevoReg.id && 
+          r.tipoRegistro === nuevoReg.tipoRegistro && 
+          r.timestamp === nuevoReg.timestamp
+        );
+
+        if (!existe) {
+          registrosActuales.push(nuevoReg);
+          insertados++;
+        } else {
+          duplicados++;
+        }
+      });
+
+      if (insertados > 0) {
+        guardarDatos(registrosActuales);
+        renderTabla();
+        actualizarStats();
+        toast(`✅ Se importaron ${insertados} registros nuevos. ${duplicados} duplicados ignorados.`);
+      } else {
+        toast(`⚠️ No se importaron registros. Revisa que las columnas coincidan con el formato original.`, 'err');
+      }
+
+      event.target.value = '';
+      
+    } catch (error) {
+      console.error(error);
+      toast('Error al procesar el archivo Excel.', 'err');
+      event.target.value = '';
+    }
+  };
+  
+  reader.readAsArrayBuffer(file);
+}
+
+function exportarJSON(){
+  const regs = cargarDatos();
+  if (!regs.length) return toast('No hay datos para respaldar','err');
+  const blob = new Blob([JSON.stringify(regs, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Respaldo_FallasRed_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('💾 Respaldo JSON descargado');
+}
+
+function limpiarTodo(){
+  if (!confirm('⚠️ ¿Borrar TODOS los registros locales? Esta acción no borrará los datos ya subidos a Drive.\n\nRecomendación: exporta primero el Excel.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  renderTabla();
+  actualizarStats();
+  $('mensaje').classList.remove('show');
+  $('waContainer').style.display = 'none';
+  $('formFalla').reset();
+  limpiarOltSeleccion();
+  $('idEvento').value = siguienteId();
+  $('idEvento').style.background = '#eef2f8';
+  alCambiarEstado();
+  generarMensajeFooter();
+  toast('Registros locales eliminados');
+}
+
+async function cargarDesdeDrive() {
+  if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('TU_URL')) return;
+  
+  try {
+    const res = await fetch(GOOGLE_SCRIPT_URL + '?t=' + new Date().getTime());
+    const datos = await res.json();
+    
+    if (Array.isArray(datos) && datos.length > 0) {
+      const locales = cargarDatos();
+      const mapa = new Map();
+      
+      [...locales, ...datos].forEach(r => {
+        if (r.fecha && r.fecha.includes('T')) {
+          r.fecha = r.fecha.split('T')[0]; 
+        }
+        if (r.hora && r.hora.includes('T')) {
+          const partes = r.hora.split('T');
+          if (partes.length > 1) {
+             r.hora = partes[1].slice(0, 5); 
+          }
+        }
+
+        const key = `${r.id}|${r.tipoRegistro}|${r.timestamp}`;
+        mapa.set(key, r);
+      });
+      
+      guardarDatos(Array.from(mapa.values()));
+    }
+  } catch (err) {
+    console.warn('No se pudo cargar desde Drive:', err);
+  }
+}
+
+(async function inicializarFormulario() {
+    await cargarDesdeDrive(); 
+    actualizarSeleccionMulti();
+    renderTabla();
+    actualizarStats();
+    generarMensajeFooter();
+
+    $('idEvento').value = siguienteId();
+    $('fecha').value = hoy();
+    $('hora').value = ahora();
+    $('idEvento').readOnly = true;
+    $('idEvento').style.background = '#eef2f8';
+})();
+</script>
+</body>
+</html>
