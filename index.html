@@ -19,7 +19,7 @@
   label .req{color:#e53935}
   input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid #B4C6E7;border-radius:8px;font-size:14px;transition:.2s;background:#fafcff}
   input:focus,select:focus,textarea:focus{outline:none;border-color:#2E5C9A;box-shadow:0 0 0 3px rgba(46,92,154,.15)}
-  input:read-only { background: #eef2f8; color: #555; cursor: not-allowed; border-color: #cbd5e1;}
+  input:read-only, select:read-only { background: #eef2f8; color: #555; cursor: not-allowed; border-color: #cbd5e1;}
   textarea{resize:vertical;min-height:70px}
   .btn{width:100%;padding:14px;background:linear-gradient(135deg,#1F3864,#2E5C9A);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-top:20px;letter-spacing:.5px;transition:.2s}
   .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(31,56,100,.4)}
@@ -29,9 +29,37 @@
   .btn-imp{background:#3B82F6}
   .btn-del{background:#c62828}
   .btn-wa{background:#25D366; color:#fff; font-weight:bold;}
-  .btn-sm{padding:6px 10px; font-size:12px; margin:0 2px; border-radius:4px; border:none; cursor:pointer; font-weight:bold; color:white;}
-  .btn-update{background:#F59E0B;}
-  .btn-finish{background:#10B981;}
+  
+  .btn-sm{
+    padding: 6px 10px; 
+    font-size: 14px; 
+    margin: 0 2px; 
+    border-radius: 6px; 
+    border: none; 
+    cursor: pointer; 
+    font-weight: bold; 
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+  }
+  .btn-sm:hover { opacity: 0.8; }
+  .btn-edit { background:#6366F1; }
+  .btn-update{ background:#F59E0B; }
+  .btn-finish{ background:#10B981; }
+  .btn-view { background:#22C55E; }
+  .btn-delete {
+    background: none;
+    border: none;
+    color: #c62828;
+    font-size: 18px;
+    cursor: pointer;
+    vertical-align: middle;
+    margin-left: 5px;
+  }
   
   .actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:15px}
   .actions .btn{margin-top:0;padding:12px;font-size:13px}
@@ -140,8 +168,8 @@
         <div class="full"><div class="divider">📋 DATOS DEL EVENTO</div></div>
 
         <div>
-          <label>ID EVENTO <span class="req">*</span></label>
-          <input type="text" id="idEvento" readonly style="background:#eef2f8;font-weight:700;color:#1F3864">
+          <label>ID EVENTO</label>
+          <input type="text" id="idEvento" readonly style="background:#eef2f8;font-weight:700;color:#1F3864" placeholder="Se generará automáticamente al guardar...">
         </div>
         <div>
           <label>ESTADO DEL EVENTO <span class="req">*</span></label>
@@ -153,7 +181,6 @@
           </select>
         </div>
 
-        <!-- CAMPO ANALISTA (OPCIONAL) -->
         <div class="full">
           <label>ANALISTA <small style="color:#607D8B;font-weight:400">(opcional)</small></label>
           <select id="analista">
@@ -285,7 +312,6 @@
       <input type="text" id="pon" placeholder="Ej: 5">
     </div>
     
-    <!-- FILA 2: Caja NAP a la izquierda, Coordenadas a la derecha -->
     <div>
       <label>Caja NAP</label>
       <input type="text" id="cajaNap" placeholder="Ej: NAP-045">
@@ -295,7 +321,6 @@
       <input type="text" id="coordenadasNap" placeholder="Ej: 10.9983, -63.8030">
     </div>
 
-    <!-- FILA 3: Usuarios a la izquierda, Ticket a la derecha -->
     <div>
       <label>USUARIOS ASOCIADOS <small style="color:#607D8B;font-weight:400">(opcional)</small></label>
       <input type="number" id="usuarios" min="0" placeholder="Ej: 32">
@@ -305,7 +330,6 @@
       <input type="text" id="ticket" placeholder="Ej: TK-2026-0042">
     </div>
 
-    <!-- FILA 4: Observación (Ocupa todo el ancho) -->
     <div class="full">
       <label>OBSERVACIÓN <span class="req">*</span></label>
       <textarea id="observacion" placeholder="Detalles del evento, acciones realizadas, etc." required></textarea>
@@ -315,9 +339,7 @@
       <label>ACCIONES IMPLEMENTADAS (Opcional)</label>
       <textarea id="acciones" placeholder="Ej: Se reinició el equipo, se cambiaron fusibles..."></textarea>
     </div>
-  </div> <!-- 👈 ESTE CIERRE ES VITAL: Cierra la cuadrícula de 2 columnas -->
-
-  <!-- El botón va AFUERA de la cuadrícula, abajo de todo -->
+  </div>
   <button type="submit" class="btn">✅ REGISTRAR EVENTO</button>
 </form>
 
@@ -404,7 +426,6 @@
         </select>
       </div>
       
-      <!-- NUEVO CAMPO DE FECHA DE ACCIÓN -->
       <div class="form-group" style="display: flex; gap: 10px;">
         <div style="flex: 1;">
             <label>FECHA DE ACCIÓN</label>
@@ -439,7 +460,7 @@
 <div id="toast" class="toast"></div>
 
 <script>
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxHN0rFQlvJS-lOE406XrWOK_3H-cVFVo74em9RKRDD6YL4D8aRHKceGT2rH118NPSF/exec'; 
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6AMNU-Yyf9Yw0ZV5lA3ps5ytx-57ZFE0i6oTLTj3GjN54uPCqVzL4rXcWlgXRRuPn5w/exec'; 
 
 const STORAGE_KEY = 'fallasRedData';
 const PREFIX = 'EV';
@@ -466,7 +487,7 @@ function cargarDatos(){
 }
 function guardarDatos(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
 
-function siguienteId(){
+function generarNuevoIdSeguro(tipoDeseado) {
   const registros = cargarDatos();
   let maxConsecutivo = 0;
 
@@ -474,7 +495,8 @@ function siguienteId(){
     if (r.id && r.id.startsWith('EV-')) {
       const partes = r.id.split('-');
       if (partes.length === 3) {
-        const num = parseInt(partes[2], 10);
+        const numStr = partes[2].replace('C', '');
+        const num = parseInt(numStr, 10);
         if (!isNaN(num) && num > maxConsecutivo) {
           maxConsecutivo = num;
         }
@@ -484,7 +506,8 @@ function siguienteId(){
 
   const siguienteNum = maxConsecutivo + 1;
   const numFormateado = String(siguienteNum).padStart(7, '0');
-  return `EV-I-${numFormateado}`;
+  const letra = tipoDeseado === 'ACTUALIZACION' ? 'A' : tipoDeseado === 'FINALIZACION' ? 'F' : 'I';
+  return `EV-${letra}-${numFormateado}`;
 }
 
 function obtenerSaludoPorHora(horaStr) {
@@ -521,7 +544,6 @@ function generarMensajeFooter(datos = null){
   });
 
   let texto = ``;
-  // Solo agregar el nombre del analista si existe y no está vacío
   if (datos && datos.analista && datos.analista.trim() !== '') {
     texto += `${datos.analista}\n`;
   }
@@ -582,7 +604,6 @@ texto += bloqueDatos + `\n\n${cierre}`;
     
   resto = resto.replace(/&lt;span class="custom-icon"&gt;🔹&lt;\/span&gt;/g, '<span class="custom-icon">🔹</span>');
 
-  // Solo agregar el nombre del analista si existe y no está vacío
   let htmlAnalista = '';
   if (datos && datos.analista && datos.analista.trim() !== '') {
     htmlAnalista = `<div style="font-weight:700; color:#FFD166; margin-bottom:4px;">${datos.analista}</div>`;
@@ -628,7 +649,6 @@ function enviarADrive(datos) {
   });
 }
 
-// ===== FUNCIÓN CORREGIDA PARA CALCULAR TIEMPO CON DÍAS =====
 function calcularTiempoTranscurrido(fechaInicioStr, horaInicio, fechaFinStr, horaFin) {
   if(!horaInicio || !horaFin || !fechaInicioStr || !fechaFinStr) return '';
   
@@ -676,7 +696,6 @@ function calcularTiempoTranscurrido(fechaInicioStr, horaInicio, fechaFinStr, hor
   return res.trim() || 'Menos de 1 minuto';
 }
 
-/* ===== LÓGICA MULTI SELECT HUB/OLT ===== */
 function toggleMultiSelect(e){
   if (e) e.stopPropagation();
   $('multiOlt').classList.toggle('open');
@@ -759,7 +778,8 @@ function alCambiarEstado() {
     inputHora.readOnly = false;
     inputId.readOnly = true;
     inputId.style.background = '#eef2f8';
-    inputId.value = siguienteId();
+    inputId.value = ''; 
+    inputId.placeholder = 'Se generará al guardar...';
     
     $('tiempoAfectacion').value = '';
     $('horaAccion').value = '';
@@ -769,34 +789,15 @@ function alCambiarEstado() {
     divTiempo.style.display = 'block';
     divAcciones.style.display = 'block';
     
-    if (!inputId.value || inputId.value.includes('-I-') || !inputId.value.startsWith('EV-')) {
-      inputId.value = 'EV-A-0000000'; 
-      inputId.readOnly = false; 
-      inputId.style.background = '#fff';
-    } else {
-      inputId.readOnly = false;
-      inputId.style.background = '#fff';
-    }
+    inputId.readOnly = false;
+    inputId.style.background = '#fff';
+    inputId.value = '';
+    inputId.placeholder = 'Ingrese ID a actualizar (Ej: EV-I-0000001)';
     
     $('horaAccion').value = ahora();
     
-    const idActual = inputId.value;
-    const registros = cargarDatos();
-    const historial = registros.filter(r => r.id === idActual);
-    
-    if (historial.length > 0) {
-      historial.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-      const primerRegistro = historial[0];
-      
-      inputFecha.value = primerRegistro.fecha;
-      inputHora.value = primerRegistro.hora;
-      inputFecha.readOnly = true;
-      inputHora.readOnly = true;
-      calcularTiempoFormulario();
-    } else {
-      inputFecha.readOnly = false;
-      inputHora.readOnly = false;
-    }
+    inputFecha.readOnly = false;
+    inputHora.readOnly = false;
   } else {
     divHoraAccion.style.display = 'none';
     divTiempo.style.display = 'none';
@@ -805,6 +806,8 @@ function alCambiarEstado() {
     inputHora.readOnly = false;
     inputId.readOnly = true;
     inputId.style.background = '#eef2f8';
+    inputId.value = '';
+    inputId.placeholder = 'Se generará al guardar...';
     $('tiempoAfectacion').value = '';
     $('horaAccion').value = '';
   }
@@ -814,7 +817,7 @@ function calcularTiempoFormulario() {
   const fecha = $('fecha').value;
   const horaInicio = $('hora').value;
   const horaAccion = $('horaAccion').value;
-  const hoyStr = hoy(); // Asumimos que la acción es hoy en el form principal
+  const hoyStr = hoy(); 
   
   if(fecha && horaInicio && horaAccion) {
     $('tiempoAfectacion').value = calcularTiempoTranscurrido(fecha, horaInicio, hoyStr, horaAccion);
@@ -823,7 +826,7 @@ function calcularTiempoFormulario() {
 
 $('idEvento').addEventListener('input', function() {
     const estado = $('estado').value;
-    if (estado !== 'INICIO') {
+    if (estado !== 'INICIO' && this.value.length >= 10) {
         let idBuscar = this.value.trim();
         
         let idNormalizado = idBuscar;
@@ -832,14 +835,16 @@ $('idEvento').addEventListener('input', function() {
         } else {
             const partes = idBuscar.split('-');
             if (partes.length === 3) {
-                idNormalizado = `EV-X-${partes[2]}`;
+                idNormalizado = `EV-X-${partes[2].replace('C', '')}`;
             }
         }
 
         const todos = cargarDatos();
         const coincidencias = todos.filter(r => {
             const partesR = r.id.split('-');
-            return partesR.length === 3 && partesR[2] === idNormalizado.split('-')[2];
+            const numR = partesR.length === 3 ? partesR[2].replace('C', '') : '';
+            const numB = idNormalizado.split('-')[2].replace('C', '');
+            return numR === numB;
         });
 
         if (coincidencias.length > 0) {
@@ -847,8 +852,8 @@ $('idEvento').addEventListener('input', function() {
             const primerRegistro = coincidencias[0];
             
             const letraActual = estado === 'ACTUALIZACION' ? 'A' : 'F';
-            const idFormateado = `EV-${letraActual}-${primerRegistro.id.split('-')[2]}`;
-            this.value = idFormateado;
+            const correlativo = primerRegistro.id.split('-')[2].replace('C', '');
+            this.value = `EV-${letraActual}-${correlativo}`;
             
             $('fecha').value = primerRegistro.fecha;
             $('hora').value = primerRegistro.hora;
@@ -867,12 +872,16 @@ $('formFalla').addEventListener('submit', async e => {
   e.preventDefault();
 
   const estado = $('estado').value;
-  const idEvento = $('idEvento').value.trim();
+  let idEvento = $('idEvento').value.trim();
   
+  if (estado === 'INICIO') {
+    idEvento = generarNuevoIdSeguro(estado);
+  }
+
   const datos = {
     id: idEvento,
     estado: estado,
-    analista: $('analista').value, // Puede estar vacío
+    analista: $('analista').value,
     fecha: $('fecha').value,
     hora: $('hora').value, 
     horaAccion: estado !== 'INICIO' ? $('horaAccion').value : '', 
@@ -892,10 +901,10 @@ $('formFalla').addEventListener('submit', async e => {
   };
 
   if (!datos.estado) return toast('Selecciona el estado del evento','err');
-  if (!datos.id) return toast('Ingresa un ID de evento','err');
+  if (!datos.id) return toast('Ingresa un ID de evento para actualizar/finalizar','err');
   if (!datos.olt) return toast('Selecciona al menos un HUB / OLT','err');
   
-  if (!/^EV-[IAF]-\d{7}$/.test(datos.id)) {
+  if (!/^EV-[IAFC]-\d{7}(C)?$/.test(datos.id)) {
     return toast('ID inválido. Sigue el formato EV-X-0000000.', 'err');
   }
 
@@ -906,11 +915,6 @@ $('formFalla').addEventListener('submit', async e => {
   }
 
   const registros = cargarDatos();
-  const existeInicio = registros.some(r => r.id === datos.id && r.tipoRegistro === 'INICIO');
-
-  if (datos.estado === 'INICIO' && existeInicio) {
-    return toast('El ID ya existe como INICIO. Selecciona ACTUALIZACIÓN o FINALIZACIÓN.','err');
-  }
   
   if (datos.estado !== 'INICIO' && !datos.horaAccion) {
     return toast('Debes ingresar la hora de la acción.', 'err');
@@ -941,7 +945,8 @@ $('formFalla').addEventListener('submit', async e => {
   limpiarOltSeleccion();
   $('fecha').value = hoy();
   $('hora').value = ahora();
-  $('idEvento').value = siguienteId();
+  $('idEvento').value = '';
+  $('idEvento').placeholder = 'Se generará al guardar...';
   $('idEvento').style.background = '#eef2f8';
   $('idEvento').readOnly = true;
   window._editandoTimestamp = null;
@@ -976,18 +981,15 @@ function abrirModalActualizar(idEvento, forzarFinalizacion = false) {
       $('modalEstado').value = 'ACTUALIZACION';
   }
 
-  // Cargamos la fecha y hora actuales por defecto
   const hoyStr = hoy();
   const horaActual = ahora();
   
   $('modalFechaAccion').value = hoyStr;
   $('modalHoraAccion').value = horaActual;
   
-  // Calculamos usando la nueva función con fecha
   const tiempoCalculado = calcularTiempoTranscurrido(eventoBase.fecha, eventoBase.hora, hoyStr, horaActual);
   $('modalTiempo').value = tiempoCalculado || 'Calculando...';
 
-  // Recalcular si el usuario cambia la fecha o la hora
   const recalcular = () => {
       const f = $('modalFechaAccion').value;
       const h = $('modalHoraAccion').value;
@@ -1029,19 +1031,18 @@ async function guardarActualizacion() {
   historial.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
   const eventoBase = historial[0];
 
-  const partesId = idEventoOriginal.split('-');
-  const correlativo = partesId[2];
+  const correlativo = idEventoOriginal.split('-')[2].replace('C', '');
   const letraEstado = nuevoEstado === 'ACTUALIZACION' ? 'A' : 'F';
   const nuevoIdEvento = `EV-${letraEstado}-${correlativo}`;
 
   const analistaFinal = analistaSeleccionado !== '' ? analistaSeleccionado : (eventoBase.analista || '');
 
   const nuevoRegistro = {
-    ...eventoBase,
+    ...eventoBase, 
     id: nuevoIdEvento,
     estado: nuevoEstado,
     analista: analistaFinal,
-    fechaAccion: fechaAccion, // Guardamos la fecha de la acción
+    fechaAccion: fechaAccion,
     horaAccion: horaAccion, 
     tiempoAfectacion: tiempo,
     observacion: observacion,
@@ -1073,10 +1074,10 @@ function renderTabla(){
   const todosLosRegistros = cargarDatos();
   const eventosMap = new Map();
   
-  // 1. Consolidar el último estado de cada evento
   todosLosRegistros.forEach(r => {
     const partes = r.id.split('-');
-    const idBase = partes.length === 3 ? `EV-X-${partes[2]}` : r.id;
+    const numBase = partes.length === 3 ? partes[2].replace('C', '') : r.id;
+    const idBase = `EV-X-${numBase}`;
 
     if (!eventosMap.has(idBase)) {
       eventosMap.set(idBase, []);
@@ -1086,7 +1087,7 @@ function renderTabla(){
 
   const eventosConsolidados = Array.from(eventosMap.values()).map(historial => {
     historial.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    return historial[0]; // Toma el estado más reciente
+    return historial[0]; 
   });
 
   const tbody = $('tbody');
@@ -1096,11 +1097,9 @@ function renderTabla(){
     return;
   }
 
-  // 2. Separar eventos pendientes y finalizados
   const pendientes = eventosConsolidados.filter(r => r.estado !== 'FINALIZACION');
   const finalizados = eventosConsolidados.filter(r => r.estado === 'FINALIZACION');
 
-  // 3. Agrupar los finalizados por fecha (usando el campo 'fecha')
   const gruposPorFecha = {};
   finalizados.forEach(r => {
     const f = r.fecha ? r.fecha.split('T')[0] : 'Sin Fecha';
@@ -1108,12 +1107,9 @@ function renderTabla(){
     gruposPorFecha[f].push(r);
   });
 
-  // Ordenar fechas de más reciente a más antigua
   const fechasOrdenadas = Object.keys(gruposPorFecha).sort((a, b) => new Date(b) - new Date(a));
-  
   const hoyStr = new Date().toISOString().slice(0, 10);
 
-  // Función interna para generar las celdas de una fila de evento
   const generarFilaEvento = (r) => {
     const cls = r.estado === 'INICIO' ? 'tag-ini' : r.estado === 'ACTUALIZACION' ? 'tag-act' : 'tag-fin';
     const ic = r.estado === 'INICIO' ? '🟡' : r.estado === 'ACTUALIZACION' ? '🔵' : '🟢';
@@ -1121,7 +1117,7 @@ function renderTabla(){
     let botones = '';
 
     if (r.estado === 'INICIO') {
-      botones += `<button class="btn-sm" style="background:#6366F1;" onclick="editarEvento('${r.id}')" title="Editar datos">🖊️</button>`;
+      botones += `<button class="btn-sm btn-edit" onclick="editarEvento('${r.id}')" title="Corregir (crea copia con C)">🖌️</button>`;
     }
 
     if (r.estado !== 'FINALIZACION') {
@@ -1131,8 +1127,8 @@ function renderTabla(){
       botones += `<span style="font-size:11px; color:#666;">Cerrado</span>`;
     }
 
-    botones += `<button class="btn-sm" style="background:#25D366;" onclick="visualizarEvento('${r.id}')" title="Ver y copiar WhatsApp">👁️</button>`;
-    botones += `<button onclick="eliminarEventoCompleto('${r.id}')" title="Eliminar todo" style="background:none;border:none;cursor:pointer;color:#c62828;font-size:16px; margin-left:5px;">✕</button>`;
+    botones += `<button class="btn-sm btn-view" onclick="visualizarEvento('${r.id}')" title="Ver y copiar WhatsApp">👁️</button>`;
+    botones += `<button onclick="eliminarEventoCompleto('${r.id}')" class="btn-delete" title="Eliminar todo">✕</button>`;
 
     return `<tr>
       <td><b>${r.id}</b></td>
@@ -1147,16 +1143,13 @@ function renderTabla(){
     </tr>`;
   };
 
-  // 4. Construir el HTML
   let htmlFinal = '';
 
-  // -- SECCIÓN A: EVENTOS PENDIENTES (Iniciados / Actualizados)
   if (pendientes.length > 0) {
     htmlFinal += `<tr><td colspan="9" style="background:#fef2f2; color:#991b1b; font-weight:bold; border-left:4px solid #c62828; text-align:left; padding:10px 12px;">🔴 EVENTOS PENDIENTES POR FINALIZAR (${pendientes.length})</td></tr>`;
     htmlFinal += pendientes.map(generarFilaEvento).join('');
   }
 
-  // -- SECCIÓN B: HISTÓRICO AGRUPADO POR FECHAS
   if (fechasOrdenadas.length > 0) {
     htmlFinal += `<tr><td colspan="9" style="background:#EAF1FB; color:#1F3864; font-weight:bold; border-left:4px solid #2E5C9A; text-align:left; padding:10px 12px;">📁 HISTÓRICO DE EVENTOS FINALIZADOS</td></tr>`;
 
@@ -1221,17 +1214,48 @@ function visualizarEvento(id) {
   toast('Vista previa cargada. Usa el botón verde para copiar.');
 }
 
-function editarEvento(id) {
+// ===== LÓGICA DE CORRECCIÓN: CIERRA EL ORIGINAL Y CREA COPIA CON SUFIJO 'C' =====
+async function editarEvento(id) {
   const registros = cargarDatos();
-  const historial = registros.filter(r => r.id === id && r.tipoRegistro === 'INICIO');
-  if (!historial.length) return toast('Solo se puede editar el registro INICIO', 'err');
+  // Buscar el registro original
+  const baseHistorial = registros.filter(r => r.id === id && r.tipoRegistro === 'INICIO');
+  if (!baseHistorial.length) return toast('Solo se puede corregir el registro INICIO', 'err');
 
-  const base = historial[0];
+  const base = baseHistorial[0];
+
+  // 1. CREAR EL REGISTRO DE CIERRE AUTOMÁTICO PARA EL ORIGINAL
+  const correlativoBase = id.split('-')[2].replace('C', '');
+  const idCierreOriginal = `EV-F-${correlativoBase}`;
+  
+  const ahoraStr = ahora();
+  const hoyStr = hoy();
+  const tiempoTranscurrido = calcularTiempoTranscurrido(base.fecha, base.hora, hoyStr, ahoraStr);
+
+  const registroCierre = {
+    ...base,
+    id: idCierreOriginal,
+    estado: 'FINALIZACION',
+    tipoRegistro: 'FINALIZACION',
+    horaAccion: ahoraStr,
+    tiempoAfectacion: tiempoTranscurrido,
+    observacion: 'CIERRE AUTOMATICO POR CORRECCION DE DATOS',
+    timestamp: new Date().toISOString()
+  };
+
+  // Guardar el cierre del original
+  registros.push(registroCierre);
+  guardarDatos(registros);
+  
+  // Enviar el cierre a Drive en segundo plano
+  enviarADrive(registroCierre);
+
+  // 2. PREPARAR EL NUEVO ID CON "C" Y CARGAR EL FORMULARIO
+  const nuevoId = `EV-I-${correlativoBase}C`;
 
   $('estado').value = 'INICIO';
   alCambiarEstado();
-
-  $('idEvento').value = base.id;
+  
+  $('idEvento').value = nuevoId;
   $('analista').value = base.analista || '';
   $('fecha').value = base.fecha;
   $('hora').value = base.hora;
@@ -1245,21 +1269,23 @@ function editarEvento(id) {
   $('observacion').value = base.observacion;
   setOltSeleccionados(base.olt);
 
-  window._editandoTimestamp = base.timestamp;
+  // Actualizar la tabla para reflejar el cierre
+  renderTabla();
+  actualizarStats();
 
-  toast('Edita los datos y presiona REGISTRAR EVENTO para guardar cambios.');
+  toast('El evento original fue cerrado. Edita los datos y guarda la nueva versión con "C".', 'ok');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function eliminarEventoCompleto(id) {
   const partes = id.split('-');
-  const idBase = partes.length === 3 ? partes[2] : id;
+  const idBase = partes.length === 3 ? partes[2].replace('C', '') : id;
 
   if (!confirm(`¿Eliminar TODOS los registros del evento ${id}? Esta acción borrará el INICIO, ACTUALIZACIONES y FINALIZACIÓN.`)) return;
   
   const registros = cargarDatos().filter(r => {
     const p = r.id.split('-');
-    return p.length === 3 ? p[2] !== idBase : r.id !== id;
+    return p.length === 3 ? p[2].replace('C', '') !== idBase : r.id !== id;
   });
   
   guardarDatos(registros);
@@ -1316,7 +1342,6 @@ if(d.coordenadasNap) {
     ? `<div class="msg-label">${ico} ANALISTA:</div><div class="msg-value">${d.analista}</div>`
     : '';
 
-  // === CONDICIONALES PARA USUARIOS Y TICKET ===
   const htmlUsuarios = (d.usuarios !== '' && d.usuarios !== undefined && d.usuarios !== null)
     ? `<div class="msg-label">${ico} USUARIOS:</div><div class="msg-value">${d.usuarios} afectados</div>`
     : '';
@@ -1391,7 +1416,6 @@ ${icoWa} *HUB / OLT:* ${d.olt}`;
   if(d.coordenadasNap) bloqueDatos += `\n${icoWa} *COORDENADAS NAP/AFT:* ${d.coordenadasNap}`;
   if(d.tiempoAfectacion) bloqueDatos += `\n${icoWa} *T. AFECTACIÓN:* ${d.tiempoAfectacion}`;
   
-  // === CONDICIONALES PARA USUARIOS Y TICKET EN WHATSAPP ===
   if(d.usuarios !== '' && d.usuarios !== undefined && d.usuarios !== null) {
       bloqueDatos += `\n${icoWa} *USUARIOS AFECTADOS:* ${d.usuarios}`;
   }
@@ -1442,7 +1466,7 @@ function actualizarStats(){
   const eventosMap = new Map();
   regs.forEach(r => {
     const p = r.id.split('-');
-    const idBase = p.length === 3 ? p[2] : r.id;
+    const idBase = p.length === 3 ? p[2].replace('C', '') : r.id;
     if (!eventosMap.has(idBase) || new Date(r.timestamp) > new Date(eventosMap.get(idBase).timestamp)) {
       eventosMap.set(idBase, r);
     }
@@ -1491,7 +1515,7 @@ function exportarExcel(){
   const eventosMap = new Map();
   regs.forEach(r => {
     const p = r.id.split('-');
-    const idBase = p.length === 3 ? p[2] : r.id;
+    const idBase = p.length === 3 ? p[2].replace('C', '') : r.id;
     if (!eventosMap.has(idBase) || new Date(r.timestamp) > new Date(eventosMap.get(idBase).timestamp)) {
       eventosMap.set(idBase, r);
     }
@@ -1660,7 +1684,8 @@ function limpiarTodo(){
   $('waContainer').style.display = 'none';
   $('formFalla').reset();
   limpiarOltSeleccion();
-  $('idEvento').value = siguienteId();
+  $('idEvento').value = '';
+  $('idEvento').placeholder = 'Se generará al guardar...';
   $('idEvento').style.background = '#eef2f8';
   alCambiarEstado();
   generarMensajeFooter();
@@ -1707,7 +1732,8 @@ async function cargarDesdeDrive() {
     actualizarStats();
     generarMensajeFooter();
 
-    $('idEvento').value = siguienteId();
+    $('idEvento').value = '';
+    $('idEvento').placeholder = 'Se generará al guardar...';
     $('fecha').value = hoy();
     $('hora').value = ahora();
     $('idEvento').readOnly = true;
